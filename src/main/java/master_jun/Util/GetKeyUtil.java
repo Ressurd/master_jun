@@ -10,9 +10,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@EnableAutoConfiguration
-@RequestMapping(value = "getKey")
+
 public class GetKeyUtil {
 	/**
 	 * @author 레서드
@@ -24,7 +22,6 @@ public class GetKeyUtil {
 	 * @param no no no no
 	 * 
 	 */
-	@RequestMapping("/getUpbitKey.do")
 	public JSONObject userGetUpbitKeyInfo() throws IOException {
 		JSONObject jo = new JSONObject();
 		
@@ -45,7 +42,6 @@ public class GetKeyUtil {
 		return jo;
 	}
 	
-	@RequestMapping("/getTelegramKey.do")
 	public JSONObject userGetTelegramKeyInfo() throws IOException {
 		JSONObject jo = new JSONObject();
 		BufferedReader bufferdReader = new BufferedReader(
