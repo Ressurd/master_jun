@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @EnableAutoConfiguration
 @RequestMapping(value = "getKey")
-public class GetKey {
+public class GetKeyUtil {
 	/**
 	 * @author 레서드
-	 * @see access_key , secret_key // chat_id , Bot_token JSON Type으로 반환함
+	 * @return access_key , secret_key // chat_id , Bot_token JSON Type으로 반환함
 	 * @return JSONObject
 	 * @throws IOException 
 	 * @date 가고 싶다
@@ -26,9 +26,12 @@ public class GetKey {
 	 */
 	@RequestMapping("/getUpbitKey.do")
 	public JSONObject userGetUpbitKeyInfo() throws IOException {
+		JSONObject jo = new JSONObject();
+		
+		/* 일단 넣고 나주엥 DB에서 */
+		
 		BufferedReader bufferdReader = new BufferedReader(
 				new FileReader("D:\\yek\\upbit.key"));
-		JSONObject jo = new JSONObject();
 		String str;
 		ArrayList<String> al = new ArrayList<>();
 		while ((str = bufferdReader.readLine()) != null) {
@@ -44,9 +47,9 @@ public class GetKey {
 	
 	@RequestMapping("/getTelegramKey.do")
 	public JSONObject userGetTelegramKeyInfo() throws IOException {
+		JSONObject jo = new JSONObject();
 		BufferedReader bufferdReader = new BufferedReader(
 				new FileReader("D:\\yek\\telegram.key"));
-		JSONObject jo = new JSONObject();
 		String str;
 		ArrayList<String> al = new ArrayList<>();
 		while ((str = bufferdReader.readLine()) != null) {
