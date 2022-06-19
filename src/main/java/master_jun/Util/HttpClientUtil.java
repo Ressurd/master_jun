@@ -28,17 +28,22 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import org.apache.http.util.EntityUtils;
+import org.springframework.stereotype.Component;
 
-
+@Component
 public class HttpClientUtil {
-	private String accessKey = System.getenv("UPBIT_OPEN_API_ACCESS_KEY");
-	private String secretKey = System.getenv("UPBIT_OPEN_API_SECRET_KEY");
-	private String serverUrl = System.getenv("UPBIT_OPEN_API_SERVER_URL");
+	private final String accessKey = System.getenv("UPBIT_OPEN_API_ACCESS_KEY");
+	private final String secretKey = System.getenv("UPBIT_OPEN_API_SECRET_KEY");
+	private final String serverUrl = System.getenv("UPBIT_OPEN_API_SERVER_URL");
     private String jwtToken = "";
     private String reqMsg = "";
     private String queryHash = null;
     private HashMap<String, String> params = null;
     
+	public HttpClientUtil() {
+		
+	}
+	
 	public HttpClientUtil(String reqMsg) {
 		this.reqMsg = reqMsg;
         this.jwtToken = getJwtToken();

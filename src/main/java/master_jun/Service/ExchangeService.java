@@ -5,17 +5,19 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import javax.annotation.Resource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import master_jun.Util.HttpClientUtil;
 
-@Component
-@EnableAutoConfiguration
+@Service
 public class ExchangeService {
 	
-	@Autowired
+	@Resource
 	HttpClientUtil httpClientUtil;
 	
 	

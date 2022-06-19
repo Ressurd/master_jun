@@ -1,11 +1,19 @@
 package master_jun.Util;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+import org.springframework.stereotype.Component;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
+
+@Component
 public class OkHttpClientUtil {
 
 	private OkHttpClient client;
@@ -17,23 +25,21 @@ public class OkHttpClientUtil {
 		market_warning	유의 종목 여부
 		NONE (해당 사항 없음), CAUTION(투자유의)	String
 	 * */
-	public String getMarketCd() {
-		OkHttpClient client = new OkHttpClient();
-
-		Request request = new Request.Builder()
-		  .url("https://api.upbit.com/v1/market/all?isDetails=false")
-		  .get()
-		  .addHeader("Accept", "application/json")
-		  .build();
-
-		try {
-			Response response = client.newCall(request).execute();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public String getMarketCd() throws IOException, InterruptedException {
 		
-		return "";
+		HttpRequest request = HttpRequest.newBuilder()
+			    .uri(URI.create("https://api.upbit.com/v1/market/all?isDetails=false"))
+			    .header("Accept", "application/json")
+			    .method("GET", HttpRequest.BodyPublishers.noBody())
+			    .build();
+
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+			System.out.println(response.body());
+		
+		System.out.println("sibal " + response.statusCode());
+		
+		return response.body().toString();
 	}
 
 	/* 캔들조회 분봉
@@ -49,17 +55,16 @@ public class OkHttpClientUtil {
 		candle_acc_trade_volume	누적 거래량	Double
 		unit	분 단위(유닛)	Integer
 	 * */
-	public String getCandleMin(String CandleType, String maketCd, String cnt) {
+	public String getCandleMin(String CandleType, String maketCd, String cnt) throws IOException, InterruptedException {
 
-		Request request = new Request.Builder().url("https://api.upbit.com/v1/candles/minutes/"+CandleType+"?market="+maketCd+"&count="+cnt)
-				.get().addHeader("Accept", "application/json").build();
-		try {
-			Response response = client.newCall(request).execute();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		HttpRequest request = HttpRequest.newBuilder()
+			    .uri(URI.create("https://api.upbit.com/v1/candles/minutes/"+CandleType+"?market="+maketCd+"&count="+cnt))
+			    .header("Accept", "application/json")
+			    .method("GET", HttpRequest.BodyPublishers.noBody())
+			    .build();
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
+			System.out.println(response.body());
 		return "";
 	}
 	
@@ -80,75 +85,74 @@ public class OkHttpClientUtil {
 	change_rate	전일 종가 대비 변화량	Double
 	converted_trade_price	종가 환산 화폐 단위로 환산된 가격(요청에 convertingPriceUnit 파라미터 없을 시 해당 필드 포함되지 않음.)	Double
 	*/
-	public String getCandleDay(String CandleType, String maketCd, String cnt) {
+	public String getCandleDay(String CandleType, String maketCd, String cnt) throws IOException, InterruptedException {
 
-		Request request = new Request.Builder().url("https://api.upbit.com/v1/candles/days/"+CandleType+"?market="+maketCd+"&count="+cnt)
-				.get().addHeader("Accept", "application/json").build();
-		try {
-			Response response = client.newCall(request).execute();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		HttpRequest request = HttpRequest.newBuilder()
+			    .uri(URI.create("https://api.upbit.com/v1/candles/days/"+CandleType+"?market="+maketCd+"&count="+cnt))
+			    .header("Accept", "application/json")
+			    .method("GET", HttpRequest.BodyPublishers.noBody())
+			    .build();
+		
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
+			System.out.println(response.body());
 		return "";
 	}
 
 	/* 체결조회 */
-	public String getTradesTicks() {
-		OkHttpClient client = new OkHttpClient();
+	public String getTradesTicks() throws IOException, InterruptedException {
+		HttpRequest request = HttpRequest.newBuilder()
 
-		Request request = new Request.Builder()
-		  .url("https://api.upbit.com/v1/trades/ticks?count=1")
-		  .get()
-		  .addHeader("Accept", "application/json")
-		  .build();
+			    .uri(URI.create("https://api.upbit.com/v1/trades/ticks?count=1"))
 
-		try {
-			Response response = client.newCall(request).execute();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			    .header("Accept", "application/json")
+
+			    .method("GET", HttpRequest.BodyPublishers.noBody())
+
+			    .build();
+
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+			System.out.println(response.body());
 		
 		return "";
 	}
 
 	/* 현재가 정보 */
-	public String getTicker() {
-		OkHttpClient client = new OkHttpClient();
+	public String getTicker() throws IOException, InterruptedException {
+		HttpRequest request = HttpRequest.newBuilder()
 
-		Request request = new Request.Builder()
-		  .url("https://api.upbit.com/v1/ticker")
-		  .get()
-		  .addHeader("Accept", "application/json")
-		  .build();
+			    .uri(URI.create("https://api.upbit.com/v1/ticker"))
 
-		try {
-			Response response = client.newCall(request).execute();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			    .header("Accept", "application/json")
+
+			    .method("GET", HttpRequest.BodyPublishers.noBody())
+
+			    .build();
+
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+			System.out.println(response.body());
+			
 		return "";
 	}
 
 	/* 호가정보 */
-	public String getOrderbook() {
-		OkHttpClient client = new OkHttpClient();
+	public String getOrderbook() throws IOException, InterruptedException {
+		HttpRequest request = HttpRequest.newBuilder()
 
-		Request request = new Request.Builder()
-		  .url("https://api.upbit.com/v1/orderbook")
-		  .get()
-		  .addHeader("Accept", "application/json")
-		  .build();
+			    .uri(URI.create("https://api.upbit.com/v1/orderbook"))
 
-		try {
-			Response response = client.newCall(request).execute();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			    .header("Accept", "application/json")
+
+			    .method("GET", HttpRequest.BodyPublishers.noBody())
+
+			    .build();
+
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+			System.out.println(response.body());
+		
 		return "";
 	}
 }
