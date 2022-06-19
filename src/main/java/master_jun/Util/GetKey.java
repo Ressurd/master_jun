@@ -15,11 +15,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "getKey")
 public class GetKey {
 	/**
-	 * @author ressurd
-	 * @return ArrayList<String>
+	 * @author 레서드
+	 * @see access_key , secret_key // chat_id , Bot_token JSON Type으로 반환함
+	 * @return JSONObject
 	 * @throws IOException 
 	 * @date 가고 싶다
 	 * @since 20220619
+	 * @param no no no no
 	 * 
 	 */
 	@RequestMapping("/getUpbitKey.do")
@@ -51,8 +53,8 @@ public class GetKey {
 			al.add(str);
 		}
 		bufferdReader.close();
-		jo.put("access_key", al.get(0));
-		jo.put("secret_key", al.get(1));
+		jo.put("chat_id", al.get(0));
+		jo.put("Bot_token", al.get(1));
 		return jo;
 	}
 }
