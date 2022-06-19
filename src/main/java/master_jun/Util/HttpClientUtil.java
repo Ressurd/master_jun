@@ -36,7 +36,7 @@ public class HttpClientUtil {
     private String jwtToken = "";
     private String reqMsg = "";
     private String queryHash = null;
-    HashMap<String, String> params = null;
+    private HashMap<String, String> params = null;
     
 	public HttpClientUtil(String reqMsg) {
 		this.reqMsg = reqMsg;
@@ -165,7 +165,7 @@ public class HttpClientUtil {
 	 * 주문취소 
 	 * 
 	 * */
-	public String sendUpbitdelete() {
+	public String sendUpbitDelete() {
 		String result = "";
 		try {
 			String authenticationToken = "Bearer " + jwtToken;
