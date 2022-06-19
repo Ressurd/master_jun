@@ -1,4 +1,4 @@
-package master_jun.main;
+package master_jun.Contoller;
 
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
