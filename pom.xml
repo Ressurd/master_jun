@@ -90,6 +90,12 @@
 		    <artifactId>java-jwt</artifactId>
 		    <version>4.0.0-beta.0</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.json/json -->
+		<dependency>
+		    <groupId>org.json</groupId>
+		    <artifactId>json</artifactId>
+		    <version>20220320</version>
+		</dependency>
 	</dependencies>
 	
 
