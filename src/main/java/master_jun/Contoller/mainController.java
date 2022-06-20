@@ -38,7 +38,7 @@ public class mainController {
 	}
 	@RequestMapping(value = "/MainBoard")
 	public String MainBoard() {
-
+		
 		return "main/MainBoard";
 	}
 	
