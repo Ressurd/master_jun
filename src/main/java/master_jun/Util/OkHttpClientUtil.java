@@ -5,18 +5,27 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Map;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.util.EntityUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
+import com.google.gson.Gson;
+
 
 
 @Component
 public class OkHttpClientUtil {
-
-	private OkHttpClient client;
+	
+	@Autowired
+	Gson gson = new Gson();
 
 	/* 종목조회 
 	 * 	market	업비트에서 제공중인 시장 정보	String
@@ -25,6 +34,7 @@ public class OkHttpClientUtil {
 		market_warning	유의 종목 여부
 		NONE (해당 사항 없음), CAUTION(투자유의)	String
 	 * */
+	
 	public String getMarketCd() throws IOException, InterruptedException {
 		
 		HttpRequest request = HttpRequest.newBuilder()
@@ -37,9 +47,7 @@ public class OkHttpClientUtil {
 
 			System.out.println(response.body());
 		
-		System.out.println("sibal " + response.statusCode());
-		
-		return response.body().toString();
+		return response.body();
 	}
 
 	/* 캔들조회 분봉
@@ -55,17 +63,33 @@ public class OkHttpClientUtil {
 		candle_acc_trade_volume	누적 거래량	Double
 		unit	분 단위(유닛)	Integer
 	 * */
-	public String getCandleMin(String CandleType, String maketCd, String cnt) throws IOException, InterruptedException {
-
+	@ResponseBody
+	public JSONArray getCandleMin(String CandleType, String maketCd, String cnt) {
+		JSONArray jsnarray= null;
 		HttpRequest request = HttpRequest.newBuilder()
 			    .uri(URI.create("https://api.upbit.com/v1/candles/minutes/"+CandleType+"?market="+maketCd+"&count="+cnt))
 			    .header("Accept", "application/json")
 			    .method("GET", HttpRequest.BodyPublishers.noBody())
 			    .build();
-			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-
-			System.out.println(response.body());
-		return "";
+			HttpResponse<String> response;
+			try {
+				response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+				
+				jsnarray = new JSONArray();
+				Object objtemp = null;
+				JSONParser jsonParser=new JSONParser();
+				objtemp = jsonParser.parse(response.body());
+				jsnarray = (JSONArray) objtemp;
+			} catch (IOException | InterruptedException | ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+			/*
+			 * System.out.println(json); System.out.println(response.body());
+			 */
+		return jsnarray;
 	}
 	
 	/*

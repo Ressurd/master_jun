@@ -16,12 +16,9 @@ public class mainController {
 	@RequestMapping(value = "")
 	public String main(Model model) throws IOException, InterruptedException {
 		
-		System.out.println("getget");
 		ChartService chartService = new ChartService();
 		
-		System.out.println(chartService.getMarketCd());
-		
-		model.addAttribute("list", chartService.getMarketCd());
+		model.addAttribute("list", chartService.getIchimokuBTHighMin(18,52,104));
 		
 		return "main/main";
 	}
