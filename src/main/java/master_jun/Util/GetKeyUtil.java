@@ -27,7 +27,6 @@ public class GetKeyUtil {
 		JSONObject jo = new JSONObject();
 		
 		/* 일단 넣고 나주엥 DB에서 */
-		
 		BufferedReader bufferdReader = new BufferedReader(
 				new FileReader("D:\\yek\\upbit.key"));
 		String str;
