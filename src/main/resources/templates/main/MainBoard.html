@@ -36,7 +36,29 @@ $(document).ready(function () {
 
         $.ajax({
             method: "POST",
-            url: 'test2.do',
+            url: 'buy',
+            data: JSON.stringify(obj),
+            dataType: 'json',
+            processData: false,
+            contentType: 'application/json',
+            success: function () {
+                console.log("completed!");
+            },
+            error: function () {
+                alert("failed! ")
+            }
+        });
+    });
+    
+    $("#sell").click(function () {
+        alert($('#access_key').val());
+        var obj;
+        obj={"money": $('#money').val()};
+        //alert(obj);
+
+        $.ajax({
+            method: "POST",
+            url: 'sell',
             data: JSON.stringify(obj),
             dataType: 'json',
             processData: false,
@@ -53,7 +75,7 @@ $(document).ready(function () {
 
 </script>
 <body>
-<form id="form" action="test2.do" method="post" enctype="multipart/form-data">
+<form id="form" action="MainBoard" method="post" enctype="multipart/form-data">
 	<table id="tb">
 		<thead>
 			<tr>
