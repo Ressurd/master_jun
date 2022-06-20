@@ -28,13 +28,14 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import org.apache.http.util.EntityUtils;
+import org.json.simple.JSONObject;
 import org.springframework.stereotype.Component;
 
 @Component
 public class HttpClientUtil {
-	private final String accessKey = System.getenv("UPBIT_OPEN_API_ACCESS_KEY");
-	private final String secretKey = System.getenv("UPBIT_OPEN_API_SECRET_KEY");
-	private final String serverUrl = System.getenv("UPBIT_OPEN_API_SERVER_URL");
+	private String accessKey = "e62t7jKhzPMp14xmgAG54vAzhCLbiXAhxuPasFSl";
+	private String secretKey = "Dx37xf7bRe7gxaURNmibUMjGqxpviacn9AgxqSUx";
+	private final String serverUrl = "https://api.upbit.com";
     private String jwtToken = "";
     private String reqMsg = "";
     private String queryHash = null;
@@ -42,6 +43,13 @@ public class HttpClientUtil {
     
 	public HttpClientUtil() {
 		
+	}
+	
+	public HttpClientUtil(JSONObject key) {
+		accessKey = (String) key.get("access_key");
+		secretKey = (String) key.get("secret_key");
+        this.jwtToken = getJwtToken();
+        System.out.println("UTIL : " + jwtToken.toString());
 	}
 	
 	public HttpClientUtil(String reqMsg) {
@@ -52,11 +60,31 @@ public class HttpClientUtil {
 	public HttpClientUtil(String reqMsg, HashMap<String, String> params, ArrayList<String> queryElements) throws NoSuchAlgorithmException, UnsupportedEncodingException{
         this.jwtToken = getJwtToken();
         this.params = params;
+        
         for(Map.Entry<String, String> entity : params.entrySet()) {
             queryElements.add(entity.getKey() + "=" + entity.getValue());
         }
 
         String queryString = String.join("&", queryElements.toArray(new String[0]));
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+        md.update(queryString.getBytes("UTF-8"));
+        this.queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
+        this.reqMsg = reqMsg+queryString;
+	}
+	
+	public HttpClientUtil(String reqMsg, HashMap<String, String> params) throws NoSuchAlgorithmException, UnsupportedEncodingException{
+        this.jwtToken = getJwtToken();
+        this.params = params;
+        System.out.println("UTIL : " + jwtToken.toString());
+    	System.out.println("HttpClientUtil - 1");
+        ArrayList<String> queryElements = new ArrayList<>();
+        System.out.println("HttpClientUtil - 2");
+        for(Map.Entry<String, String> entity : params.entrySet()) {
+            queryElements.add(entity.getKey() + "=" + entity.getValue());
+        }
+        System.out.println("HttpClientUtil - 3");
+        String queryString = String.join("&", queryElements.toArray(new String[0]));
+        System.out.println("HttpClientUtil - 4");
         MessageDigest md = MessageDigest.getInstance("SHA-512");
         md.update(queryString.getBytes("UTF-8"));
         this.queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
@@ -102,6 +130,7 @@ public class HttpClientUtil {
 	public String sendUpbitGet() {
 		String result = "";
 		try {
+	        
 			String authenticationToken = "Bearer " + jwtToken;
 
             HttpClient client = HttpClientBuilder.create().build();
@@ -136,28 +165,32 @@ public class HttpClientUtil {
 	 * */
 	public String sendUpbitPost() {
 		String result = "";
+		System.out.println("testPOST");
 		try {
+	        System.out.println("testPOST2");
 			String authenticationToken = "Bearer " + jwtToken;
-
+			System.out.println("UTIL2 : " + jwtToken.toString());
+			System.out.println("testPOST3");
             HttpClient client = HttpClientBuilder.create().build();
-
+        	
             HttpPost request = new HttpPost(serverUrl + "/v1/orders");
-
+            System.out.println(request.getURI());
+            System.out.println("testPOST4");
             request.setHeader("Content-Type", "application/json");
-
+            System.out.println("testPOST5");
             request.addHeader("Authorization", authenticationToken);
-
+            System.out.println("testPOST6");
             request.setEntity(new StringEntity(new Gson().toJson(params)));
-
+            System.out.println("testPOST7");
 
             HttpResponse response = client.execute(request);
-
+            System.out.println("testPOST8");
             HttpEntity entity = response.getEntity();
-
+            System.out.println("testPOST9");
             result = EntityUtils.toString(entity, "UTF-8");
-            
+            System.out.println("testPOST10");
             System.out.println("sendUpbit result: "+result);
-
+            System.out.println("testPOST11");
         } catch (IOException e) {
 
             e.printStackTrace();
@@ -165,6 +198,99 @@ public class HttpClientUtil {
         }
 		return result;
 	}
+	
+	public void sendUpbitPost2() throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		HashMap<String, String> params = new HashMap<>();
+        params.put("market", "KRW-BTC");
+        params.put("side", "bid");
+        //params.put("volume", "0.01");
+        params.put("price", "15000");
+        params.put("ord_type", "price");
+
+        ArrayList<String> queryElements = new ArrayList<>();
+        for(Map.Entry<String, String> entity : params.entrySet()) {
+            queryElements.add(entity.getKey() + "=" + entity.getValue());
+        }
+
+        String queryString = String.join("&", queryElements.toArray(new String[0]));
+
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+        md.update(queryString.getBytes("UTF-8"));
+
+        String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
+
+        Algorithm algorithm = Algorithm.HMAC256(secretKey);
+        String jwtToken = JWT.create()
+                .withClaim("access_key", accessKey)
+                .withClaim("nonce", UUID.randomUUID().toString())
+                .withClaim("query_hash", queryHash)
+                .withClaim("query_hash_alg", "SHA512")
+                .sign(algorithm);
+
+        String authenticationToken = "Bearer " + jwtToken;
+
+        try {
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpPost request = new HttpPost(serverUrl + "/v1/orders");
+            request.setHeader("Content-Type", "application/json");
+            request.addHeader("Authorization", authenticationToken);
+            request.setEntity(new StringEntity(new Gson().toJson(params)));
+
+            HttpResponse response = client.execute(request);
+            HttpEntity entity = response.getEntity();
+
+            System.out.println(EntityUtils.toString(entity, "UTF-8"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+	
+	public void sendUpbitPost3() throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		HashMap<String, String> params = new HashMap<>();
+        params.put("market", "KRW-BTC");
+        params.put("side", "ask");
+        params.put("volume", "0.01");
+        //params.put("price", "15000");
+        params.put("ord_type", "market");
+
+        ArrayList<String> queryElements = new ArrayList<>();
+        for(Map.Entry<String, String> entity : params.entrySet()) {
+            queryElements.add(entity.getKey() + "=" + entity.getValue());
+        }
+
+        String queryString = String.join("&", queryElements.toArray(new String[0]));
+
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+        md.update(queryString.getBytes("UTF-8"));
+
+        String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
+
+        Algorithm algorithm = Algorithm.HMAC256(secretKey);
+        String jwtToken = JWT.create()
+                .withClaim("access_key", accessKey)
+                .withClaim("nonce", UUID.randomUUID().toString())
+                .withClaim("query_hash", queryHash)
+                .withClaim("query_hash_alg", "SHA512")
+                .sign(algorithm);
+
+        String authenticationToken = "Bearer " + jwtToken;
+
+        try {
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpPost request = new HttpPost(serverUrl + "/v1/orders");
+            request.setHeader("Content-Type", "application/json");
+            request.addHeader("Authorization", authenticationToken);
+            request.setEntity(new StringEntity(new Gson().toJson(params)));
+
+            HttpResponse response = client.execute(request);
+            HttpEntity entity = response.getEntity();
+
+            System.out.println(EntityUtils.toString(entity, "UTF-8"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+	
 	
 	/* 
 	 * 

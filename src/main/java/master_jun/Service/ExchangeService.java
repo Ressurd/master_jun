@@ -95,6 +95,25 @@ public class ExchangeService {
 		return httpClientUtil.sendUpbitPost(); 
 	}
 	
+	public String goOrder2(HashMap<String, String> params) {
+		
+		try {
+			System.out.println("goOrder2 - 1");
+			httpClientUtil = new HttpClientUtil("/v1/orders", params);
+			System.out.println("goOrder2 - 2");
+		} catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return httpClientUtil.sendUpbitPost(); 
+	}
 	
+	public void goOrder3(HashMap<String, String> params) throws NoSuchAlgorithmException, UnsupportedEncodingException{
+		httpClientUtil.sendUpbitPost2();
+	}
+	
+	public void goOrder4() throws NoSuchAlgorithmException, UnsupportedEncodingException{
+		httpClientUtil.sendUpbitPost3();
+	}
 	
 }

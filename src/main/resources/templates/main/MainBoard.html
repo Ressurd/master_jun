@@ -29,7 +29,7 @@ $(document).ready(function () {
     var editForm = $("#editForm");
 
     $("#buy").click(function () {
-        alert($('#access_key').val());
+        //alert($('#access_key').val());
         var obj;
         obj={"money": $('#money').val()};
         //alert(obj);
@@ -43,15 +43,12 @@ $(document).ready(function () {
             contentType: 'application/json',
             success: function () {
                 console.log("completed!");
-            },
-            error: function () {
-                alert("failed! ")
             }
         });
     });
     
     $("#sell").click(function () {
-        alert($('#access_key').val());
+        //alert($('#access_key').val());
         var obj;
         obj={"money": $('#money').val()};
         //alert(obj);
@@ -65,9 +62,6 @@ $(document).ready(function () {
             contentType: 'application/json',
             success: function () {
                 console.log("completed!");
-            },
-            error: function () {
-                alert("failed! ")
             }
         });
     });

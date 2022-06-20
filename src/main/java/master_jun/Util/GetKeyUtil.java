@@ -23,6 +23,7 @@ public class GetKeyUtil {
 	 * @param no no no no
 	 * 
 	 */
+	@SuppressWarnings("unchecked")
 	public JSONObject userGetUpbitKeyInfo() throws IOException {
 		JSONObject jo = new JSONObject();
 		
@@ -37,8 +38,9 @@ public class GetKeyUtil {
 		bufferdReader.close();
 		
 		jo.put("access_key", al.get(0));
+		System.out.println(al.get(0));
 		jo.put("secret_key", al.get(1));
-		
+		System.out.println(al.get(1));
 		return jo;
 	}
 	
