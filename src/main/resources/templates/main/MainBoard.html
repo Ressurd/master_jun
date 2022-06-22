@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+<head>
+<meta charset="UTF-8">
+<title>sibal input</title>
+</head>
+<style>
+
+    table {
+      font-family: arial, sans-serif;
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    td, th {
+      border: 1px solid #dddddd;
+      text-align: left;
+      padding: 8px;
+    }
+
+    tr:nth-child(even) {
+      background-color: #dddddd;
+    }
+
+</style>
+<script>
+$(document).ready(function () {
+    var editForm = $("#editForm");
+
+    $("#buy").click(function () {
+        alert($('#access_key').val());
+        var obj;
+        obj={"money": $('#money').val()};
+        //alert(obj);
+
+        $.ajax({
+            method: "POST",
+            url: 'test2.do',
+            data: JSON.stringify(obj),
+            dataType: 'json',
+            processData: false,
+            contentType: 'application/json',
+            success: function () {
+                console.log("completed!");
+            },
+            error: function () {
+                alert("failed! ")
+            }
+        });
+    });
+});
+
+</script>
+<body>
+<form id="form" action="test2.do" method="post" enctype="multipart/form-data">
+	<table id="tb">
+		<thead>
+			<tr>
+				<th>금액</th>
+				<th>매수하기</th>
+				<th>매도하기</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><input type="text" value="" id="money" name="money"></td>
+				<td><input type="button" value="매수" id="buy" name="buy" ></td>
+				<td><input type="button" value="매도" id="sell" name="sell"></td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+</body>
+</html>
