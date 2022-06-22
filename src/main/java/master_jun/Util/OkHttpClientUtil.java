@@ -64,13 +64,24 @@ public class OkHttpClientUtil {
 		unit	분 단위(유닛)	Integer
 	 * */
 	@ResponseBody
-	public JSONArray getCandleMin(String CandleType, String maketCd, String cnt) {
+	public JSONArray getCandleMin(String CandleType, String maketCd, String cnt, String date ) {
 		JSONArray jsnarray= null;
-		HttpRequest request = HttpRequest.newBuilder()
-			    .uri(URI.create("https://api.upbit.com/v1/candles/minutes/"+CandleType+"?market="+maketCd+"&count="+cnt))
-			    .header("Accept", "application/json")
-			    .method("GET", HttpRequest.BodyPublishers.noBody())
-			    .build();
+		HttpRequest request= null;
+		if(date.equals("")) {
+			request = HttpRequest.newBuilder()
+				    .uri(URI.create("https://api.upbit.com/v1/candles/minutes/"+CandleType+"?market="+maketCd+"&count="+cnt))
+				    .header("Accept", "application/json")
+				    .method("GET", HttpRequest.BodyPublishers.noBody())
+				    .build();
+			
+		}else {
+			request = HttpRequest.newBuilder()
+				    .uri(URI.create("https://api.upbit.com/v1/candles/minutes/"+CandleType+"?market="+maketCd+"&to="+date+"&count="+cnt))
+				    .header("Accept", "application/json")
+				    .method("GET", HttpRequest.BodyPublishers.noBody())
+				    .build();
+			
+		}
 			HttpResponse<String> response;
 			try {
 				response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
