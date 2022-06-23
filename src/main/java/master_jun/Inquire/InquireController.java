@@ -16,7 +16,9 @@ import org.springframework.web.servlet.ModelAndView;
  * 주로 스케쥴러 돌려서 만들거긴함~
  * 
  * 나중에 웹소켓이던 뭐던..
+ * @since 20220624
  * @author ressu
+ * @category Inquire
  *
  */
 @Controller
