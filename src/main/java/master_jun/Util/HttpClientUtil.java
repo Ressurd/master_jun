@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.http.HttpEntity;
-
+import org.json.simple.JSONObject;
 import org.apache.http.HttpResponse;
 
 import org.apache.http.client.HttpClient;
@@ -28,7 +28,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import org.apache.http.util.EntityUtils;
-import org.json.simple.JSONObject;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -52,24 +51,10 @@ public class HttpClientUtil {
         System.out.println("UTIL : " + jwtToken.toString());
 	}
 	
+	
 	public HttpClientUtil(String reqMsg) {
 		this.reqMsg = reqMsg;
         this.jwtToken = getJwtToken();
-	}
-	
-	public HttpClientUtil(String reqMsg, HashMap<String, String> params, ArrayList<String> queryElements) throws NoSuchAlgorithmException, UnsupportedEncodingException{
-        this.jwtToken = getJwtToken();
-        this.params = params;
-        
-        for(Map.Entry<String, String> entity : params.entrySet()) {
-            queryElements.add(entity.getKey() + "=" + entity.getValue());
-        }
-
-        String queryString = String.join("&", queryElements.toArray(new String[0]));
-        MessageDigest md = MessageDigest.getInstance("SHA-512");
-        md.update(queryString.getBytes("UTF-8"));
-        this.queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
-        this.reqMsg = reqMsg+queryString;
 	}
 	
 	public HttpClientUtil(String reqMsg, HashMap<String, String> params) throws NoSuchAlgorithmException, UnsupportedEncodingException{
@@ -90,6 +75,7 @@ public class HttpClientUtil {
         this.queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
         this.reqMsg = reqMsg+queryString;
 	}
+	
 	
 	public String getJwtToken() {
 		Algorithm algorithm = Algorithm.HMAC256(secretKey);
@@ -130,7 +116,6 @@ public class HttpClientUtil {
 	public String sendUpbitGet() {
 		String result = "";
 		try {
-	        
 			String authenticationToken = "Bearer " + jwtToken;
 
             HttpClient client = HttpClientBuilder.create().build();
@@ -160,38 +145,25 @@ public class HttpClientUtil {
 	
 	/* 
 	 * 
-	 * 주문하기 
+	 * 주문하기 v1
 	 * 
 	 * */
 	public String sendUpbitPost() {
 		String result = "";
-		System.out.println("testPOST");
+		
 		try {
-	        System.out.println("testPOST2");
 			String authenticationToken = "Bearer " + jwtToken;
-			System.out.println("UTIL2 : " + jwtToken.toString());
-			System.out.println("testPOST3");
             HttpClient client = HttpClientBuilder.create().build();
-        	
             HttpPost request = new HttpPost(serverUrl + "/v1/orders");
-            System.out.println(request.getURI());
-            System.out.println("testPOST4");
+
             request.setHeader("Content-Type", "application/json");
-            System.out.println("testPOST5");
             request.addHeader("Authorization", authenticationToken);
-            System.out.println("testPOST6");
             request.setEntity(new StringEntity(new Gson().toJson(params)));
-            System.out.println("testPOST7");
 
             HttpResponse response = client.execute(request);
-            System.out.println("testPOST8");
             HttpEntity entity = response.getEntity();
-            System.out.println("testPOST9");
             result = EntityUtils.toString(entity, "UTF-8");
-            System.out.println("testPOST10");
-            System.out.println("sendUpbit result: "+result);
-            System.out.println("testPOST11");
-        } catch (IOException e) {
+		} catch (IOException e) {
 
             e.printStackTrace();
 
@@ -199,6 +171,11 @@ public class HttpClientUtil {
 		return result;
 	}
 	
+	/**
+	 * 주문하기 new 버전 넘기는 값은 params에 넣어야함.
+	 * @throws NoSuchAlgorithmException
+	 * @throws UnsupportedEncodingException
+	 */
 	public void sendUpbitPost2() throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		HashMap<String, String> params = new HashMap<>();
         params.put("market", "KRW-BTC");
@@ -244,6 +221,12 @@ public class HttpClientUtil {
             e.printStackTrace();
         }
     }
+	
+	/**
+	 * 판매하기 만들기 (아직 가지고있는 값 못받아와서 못만들었쯤)
+	 * @throws NoSuchAlgorithmException
+	 * @throws UnsupportedEncodingException
+	 */
 	
 	public void sendUpbitPost3() throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		HashMap<String, String> params = new HashMap<>();

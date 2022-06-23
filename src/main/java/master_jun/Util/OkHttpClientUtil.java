@@ -143,23 +143,23 @@ public class OkHttpClientUtil {
 	}
 
 	/* 현재가 정보 */
-	public String getTicker() throws IOException, InterruptedException {
-		HttpRequest request = HttpRequest.newBuilder()
+    public String getTicker(String market) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
 
-			    .uri(URI.create("https://api.upbit.com/v1/ticker"))
+                .uri(URI.create("https://api.upbit.com/v1/ticker?markets="+market))
 
-			    .header("Accept", "application/json")
+                .header("Accept", "application/json")
 
-			    .method("GET", HttpRequest.BodyPublishers.noBody())
+                .method("GET", HttpRequest.BodyPublishers.noBody())
 
-			    .build();
+                .build();
 
-			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-			System.out.println(response.body());
-			
-		return "";
-	}
+            System.out.println(response.body());
+
+        return "";
+    }
 
 	/* 호가정보 */
 	public String getOrderbook() throws IOException, InterruptedException {
