@@ -2,6 +2,7 @@ package master_jun.Util;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -80,6 +81,48 @@ public class ToolUtil {
         }
 		
 		return temp;
+	}
+	
+	/*
+	 *  산술 평균 구하기 
+	 *  */
+	public static double getAvg(List<Double> arr) {  
+	    double sum = 0.0;
+
+	    for (int i = 0; i < arr.size(); i++) {
+	    	sum += arr.get(i);
+	    }
+	    
+
+	    String formattedResult = String.format("%.2f", sum / arr.size());
+
+	    return Double.parseDouble(formattedResult);
+	}
+	
+	
+	/*
+	 * 표준편차 구하기
+	 */
+	public BigDecimal getStddev(List<Double> arr, int option) {
+		
+	    if (arr.size() < 2) {
+	    	return BigDecimal.valueOf(arr.get(0));
+	    }
+	    double sum = 0.0;
+	    double sd = 0.0;
+	    double diff;
+	    double avgValue = getAvg(arr);
+
+	    for (int i = 0; i < arr.size(); i++) {
+	      diff = arr.get(i) - avgValue;
+	      sum += diff * diff;
+	    }
+	    
+	    String formattedResult = String.format("%.2f", Math.sqrt(sum / (arr.size() - option)));
+	    sd= Double.parseDouble(formattedResult);
+
+	    return BigDecimal.valueOf(sd);
+
 	}
 	
 	

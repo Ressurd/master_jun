@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,8 +32,9 @@ public class ChartService {
 		return okhttpClientUtil.getMarketCd();
 	}
 	
-	public BigDecimal getIchimokuBTHighMin(String coinNm,int stand, int num1, int num2, int num3, int num4) throws IOException, InterruptedException {
+	public Map <String, Object> getIchimokuBTMin(String coinNm,int stand, int num1, int num2, int num3, int num4) throws IOException, InterruptedException {
 		
+		Map<String, Object> result = new HashMap<String, Object>();
 		JSONObject temp = null;
 		
 		Date today = new Date();
@@ -112,20 +114,66 @@ public class ChartService {
 			prereqSpan1 = toolUtil.getBigDecMax(hspan1arr).add(toolUtil.getBigDecMin(lspan1arr)).add(toolUtil.getBigDecMax(hspan2arr).add(toolUtil.getBigDecMin(lspan2arr))).divide(BigDecimal.valueOf(4));
 			prereqSpan2 = toolUtil.getBigDecMax(hspanParr).add(toolUtil.getBigDecMin(lspanParr)).divide(BigDecimal.valueOf(2));;
 			
-			System.out.println("changeline  "+changeline.toPlainString());
-			System.out.println("standardline  "+standardline.toPlainString());
-			System.out.println("prereqSpan1  "+prereqSpan1.toPlainString());
-			System.out.println("prereqSpan2  "+prereqSpan2.toPlainString());
+			result.put("changeline", changeline);
+			result.put("standardline", standardline);
+			result.put("prereqSpan1", prereqSpan1);
+			result.put("prereqSpan2", prereqSpan2);
 			
 		}catch(NullPointerException e) {
 			throw e;
 		}
 		
 		if(prereqSpan1.compareTo(prereqSpan2)==1) {
-			return prereqSpan1;
+			result.put("high_prereqSpan", prereqSpan1);
+			result.put("row_prereqSpan", prereqSpan2);
 		}else {
-			return prereqSpan2;
+			result.put("high_prereqSpan", prereqSpan2);
+			result.put("row_prereqSpan", prereqSpan1);
 		}
-
+		
+		System.out.println("changeline  "+changeline.toPlainString());
+		System.out.println("standardline  "+standardline.toPlainString());
+		System.out.println("prereqSpan1  "+prereqSpan1.toPlainString());
+		System.out.println("prereqSpan2  "+prereqSpan2.toPlainString());
+		System.out.println("high_prereqSpan  "+result.get("high_prereqSpan"));
+		System.out.println("row_prereqSpan  "+result.get("row_prereqSpan"));
+		
+		return result;
 	}
+	
+	public Map<String, Object> getBBMin(String coinNm, int cType, int stand, double d){
+		Map<String, Object> result = new HashMap<String, Object>();
+		JSONObject temp = null;
+		BigDecimal stdDev = null;//표준편차 담아둘 예정
+		BigDecimal ma = null;//이평선 담아둘 예정
+		BigDecimal highbb = null;//상단선 담아둘 예정
+		BigDecimal lowbb = null;//하단선 담아둘 예정
+		List<Double> arr = new ArrayList<Double>();//전환선용 고가 목록
+		
+		JSONArray candle = okhttpClientUtil.getCandleMin(Integer.toString(cType), coinNm, Integer.toString(stand), "");
+		
+		for(int i=1; i<stand; i++) {
+			temp = (JSONObject)candle.get(i);
+			arr.add(Double.parseDouble(temp.get("trade_price").toString()));
+		}
+		
+		toolUtil = new ToolUtil();
+		
+		ma = BigDecimal.valueOf(toolUtil.getAvg(arr));
+		stdDev = toolUtil.getStddev(arr, 1);
+		highbb = ma.add(stdDev.divide(BigDecimal.valueOf(d)));
+		lowbb = ma.subtract(stdDev.divide(BigDecimal.valueOf(d)));
+		
+		result.put("ma", ma);
+		result.put("highbb", highbb);
+		result.put("lowbb", lowbb);
+		
+		System.out.println("ma  "+ma.toPlainString());
+		System.out.println("stdDev  "+stdDev.toPlainString());
+		System.out.println("highbb  "+highbb.toPlainString());
+		System.out.println("lowbb  "+lowbb.toPlainString());
+	
+		return result;
+	}
+
 }

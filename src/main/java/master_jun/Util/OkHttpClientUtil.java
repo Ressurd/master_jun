@@ -85,12 +85,12 @@ public class OkHttpClientUtil {
 			HttpResponse<String> response;
 			try {
 				response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-				
+				System.out.println(response.statusCode());
 				jsnarray = new JSONArray();
-				Object objtemp = null;
+				/* Object objtemp = null; */
 				JSONParser jsonParser=new JSONParser();
-				objtemp = jsonParser.parse(response.body());
-				jsnarray = (JSONArray) objtemp;
+				//objtemp = jsonParser.parse(response.body());
+				jsnarray = (JSONArray) jsonParser.parse(response.body());
 			} catch (IOException | InterruptedException | ParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -154,10 +154,10 @@ public class OkHttpClientUtil {
 	}
 
 	/* 현재가 정보 */
-	public String getTicker() throws IOException, InterruptedException {
+	public String getTicker(String market) throws IOException, InterruptedException {
 		HttpRequest request = HttpRequest.newBuilder()
 
-			    .uri(URI.create("https://api.upbit.com/v1/ticker"))
+			    .uri(URI.create("https://api.upbit.com/v1/ticker?markets="+market))
 
 			    .header("Accept", "application/json")
 

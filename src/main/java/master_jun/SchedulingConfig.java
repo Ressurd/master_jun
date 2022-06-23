@@ -14,4 +14,4 @@ public class SchedulingConfig implements SchedulingConfigurer {
         threadPoolTaskScheduler.initialize(); 
         taskRegistrar.setTaskScheduler(threadPoolTaskScheduler); 
     } 
-} 
+}
