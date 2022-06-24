@@ -1,6 +1,7 @@
 package master_jun.Contoller;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -23,8 +24,13 @@ public class mainController {
 		
 		chartService = new ChartService();
 		
-		model.addAttribute("list", chartService.getIchimokuBTHighMin("KRW-BTC", 5, 9,26,52,26));
+		Map<String, Object> temp = null;
+		
+		temp = chartService.getIchimokuBTMin("KRW-BTC", 5, 9, 26, 52, 26);
+		temp = chartService.getBBMin("KRW-BTC", 5, 20, 1.5);
 		
 		return "main/main";
 	}
+	
+	
 }
