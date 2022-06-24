@@ -27,6 +27,17 @@ public class OkHttpClientUtil {
 	@Autowired
 	Gson gson = new Gson();
 	
+	/**
+	 * String 형에는 원하는 값을 넣으셈 ex) trade_price // 현재가 trade.... 
+	 * JSONArray 에는 JSONArray 값 넣어주면 알아서 됨
+	 * JSONArray 안에 있는 값중에서 원하는 value 뽑아주는 메서드임
+	 * @date 2022. 6. 24.
+	 * @author 레서드
+	 * @param getValue
+	 * @param jsonArr
+	 * @return
+	 * @throws Exception
+	 */
 	public Object getJsonValue(String getValue, JSONArray jsonArr) throws Exception{
 		JSONObject jso = null;
 		for(Object obj: jsonArr) 
@@ -38,9 +49,9 @@ public class OkHttpClientUtil {
 	 * JSON String to JSONArray
 	 * @date 2022. 6. 24.
 	 * @author 레서드
-	 * @param jsonString
+	 * @param jsonString // 넣고싶은 너의 스트링형을
 	 * @param queryElements
-	 * @return JSONArray
+	 * @return JSONArray // JSONArray로 재탄생시킨다.
 	 * @throws ParseException 
 	 */
 	public JSONArray getJsonToList(String jsonString) throws ParseException{
