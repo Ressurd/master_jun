@@ -26,6 +26,38 @@ public class OkHttpClientUtil {
 	
 	@Autowired
 	Gson gson = new Gson();
+	
+	/**
+	 * String 형에는 원하는 값을 넣으셈 ex) trade_price // 현재가 trade.... 
+	 * JSONArray 에는 JSONArray 값 넣어주면 알아서 됨
+	 * JSONArray 안에 있는 값중에서 원하는 value 뽑아주는 메서드임
+	 * @date 2022. 6. 24.
+	 * @author 레서드
+	 * @param getValue
+	 * @param jsonArr
+	 * @return
+	 * @throws Exception
+	 */
+	public Object getJsonValue(String getValue, JSONArray jsonArr) throws Exception{
+		JSONObject jso = null;
+		for(Object obj: jsonArr) 
+			jso = (JSONObject) obj;
+		return jso.get(getValue);
+	}
+	
+	/**
+	 * JSON String to JSONArray
+	 * @date 2022. 6. 24.
+	 * @author 레서드
+	 * @param jsonString // 넣고싶은 너의 스트링형을
+	 * @param queryElements
+	 * @return JSONArray // JSONArray로 재탄생시킨다.
+	 * @throws ParseException 
+	 */
+	public JSONArray getJsonToList(String jsonString) throws ParseException{
+		return (JSONArray) new JSONParser().parse(jsonString);
+	}
+	
 
 	/* 종목조회 
 	 * 	market	업비트에서 제공중인 시장 정보	String
@@ -45,7 +77,7 @@ public class OkHttpClientUtil {
 
 			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-			System.out.println(response.body());
+			//System.out.println(response.body());
 		
 		return response.body();
 	}
@@ -167,9 +199,9 @@ public class OkHttpClientUtil {
 
 			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-			System.out.println(response.body());
+			//System.out.println(response.body());
 			
-		return "";
+		return response.body();
 	}
 
 	/* 호가정보 */
