@@ -26,6 +26,20 @@ public class OkHttpClientUtil {
 	
 	@Autowired
 	Gson gson = new Gson();
+	
+	/**
+	 * JSON String to JSONArray
+	 * @date 2022. 6. 24.
+	 * @author 레서드
+	 * @param jsonString
+	 * @param queryElements
+	 * @return JSONArray
+	 * @throws ParseException 
+	 */
+	public JSONArray getJsonToList(String jsonString) throws ParseException{
+		return (JSONArray) new JSONParser().parse(jsonString);
+	}
+	
 
 	/* 종목조회 
 	 * 	market	업비트에서 제공중인 시장 정보	String
@@ -45,7 +59,7 @@ public class OkHttpClientUtil {
 
 			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-			System.out.println(response.body());
+			//System.out.println(response.body());
 		
 		return response.body();
 	}
@@ -64,22 +78,33 @@ public class OkHttpClientUtil {
 		unit	분 단위(유닛)	Integer
 	 * */
 	@ResponseBody
-	public JSONArray getCandleMin(String CandleType, String maketCd, String cnt) {
+	public JSONArray getCandleMin(String CandleType, String maketCd, String cnt, String date ) {
 		JSONArray jsnarray= null;
-		HttpRequest request = HttpRequest.newBuilder()
-			    .uri(URI.create("https://api.upbit.com/v1/candles/minutes/"+CandleType+"?market="+maketCd+"&count="+cnt))
-			    .header("Accept", "application/json")
-			    .method("GET", HttpRequest.BodyPublishers.noBody())
-			    .build();
+		HttpRequest request= null;
+		if(date.equals("")) {
+			request = HttpRequest.newBuilder()
+				    .uri(URI.create("https://api.upbit.com/v1/candles/minutes/"+CandleType+"?market="+maketCd+"&count="+cnt))
+				    .header("Accept", "application/json")
+				    .method("GET", HttpRequest.BodyPublishers.noBody())
+				    .build();
+			
+		}else {
+			request = HttpRequest.newBuilder()
+				    .uri(URI.create("https://api.upbit.com/v1/candles/minutes/"+CandleType+"?market="+maketCd+"&to="+date+"&count="+cnt))
+				    .header("Accept", "application/json")
+				    .method("GET", HttpRequest.BodyPublishers.noBody())
+				    .build();
+			
+		}
 			HttpResponse<String> response;
 			try {
 				response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-				
+				System.out.println(response.statusCode());
 				jsnarray = new JSONArray();
-				Object objtemp = null;
+				/* Object objtemp = null; */
 				JSONParser jsonParser=new JSONParser();
-				objtemp = jsonParser.parse(response.body());
-				jsnarray = (JSONArray) objtemp;
+				//objtemp = jsonParser.parse(response.body());
+				jsnarray = (JSONArray) jsonParser.parse(response.body());
 			} catch (IOException | InterruptedException | ParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -143,23 +168,23 @@ public class OkHttpClientUtil {
 	}
 
 	/* 현재가 정보 */
-    public String getTicker(String market) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
+	public String getTicker(String market) throws IOException, InterruptedException {
+		HttpRequest request = HttpRequest.newBuilder()
 
-                .uri(URI.create("https://api.upbit.com/v1/ticker?markets="+market))
+			    .uri(URI.create("https://api.upbit.com/v1/ticker?markets="+market))
 
-                .header("Accept", "application/json")
+			    .header("Accept", "application/json")
 
-                .method("GET", HttpRequest.BodyPublishers.noBody())
+			    .method("GET", HttpRequest.BodyPublishers.noBody())
 
-                .build();
+			    .build();
 
-            HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-            System.out.println(response.body());
-
-        return "";
-    }
+			//System.out.println(response.body());
+			
+		return response.body();
+	}
 
 	/* 호가정보 */
 	public String getOrderbook() throws IOException, InterruptedException {
