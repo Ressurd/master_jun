@@ -26,13 +26,13 @@ public class ChartService {
 	@Autowired
 	ToolUtil toolUtil;
 	
-	public String getMarketCd()  throws IOException, InterruptedException {
+	public JSONArray getMarketCd()  throws Exception {
 		okhttpClientUtil = new OkHttpClientUtil();
 
 		return okhttpClientUtil.getMarketCd();
 	}
 	
-	public Map <String, Object> getIchimokuBTMin(String coinNm,int stand, int num1, int num2, int num3, int num4) throws IOException, InterruptedException {
+	public Map <String, Object> getIchimokuBTMin(String coinNm,int stand, int num1, int num2, int num3, int num4) throws Exception {
 		
 		Map<String, Object> result = new HashMap<String, Object>();
 		JSONObject temp = null;
@@ -109,10 +109,10 @@ public class ChartService {
 		 * (hspan1arr.get(h1size-1).doubleValue()+lspan1arr.get(0).doubleValue())/2;
 		 */
 		try {
-			changeline = toolUtil.getBigDecMax(hspanCarr).add(toolUtil.getBigDecMin(lspanCarr)).divide(BigDecimal.valueOf(2));
-			standardline = toolUtil.getBigDecMax(hspanSarr).add(toolUtil.getBigDecMin(lspanSarr)).divide(BigDecimal.valueOf(2));
-			prereqSpan1 = toolUtil.getBigDecMax(hspan1arr).add(toolUtil.getBigDecMin(lspan1arr)).add(toolUtil.getBigDecMax(hspan2arr).add(toolUtil.getBigDecMin(lspan2arr))).divide(BigDecimal.valueOf(4));
-			prereqSpan2 = toolUtil.getBigDecMax(hspanParr).add(toolUtil.getBigDecMin(lspanParr)).divide(BigDecimal.valueOf(2));;
+			changeline = toolUtil.getBigDecMax(hspanCarr).add(toolUtil.getBigDecMin(lspanCarr)).divide(BigDecimal.valueOf(2), 2, BigDecimal.ROUND_DOWN);
+			standardline = toolUtil.getBigDecMax(hspanSarr).add(toolUtil.getBigDecMin(lspanSarr)).divide(BigDecimal.valueOf(2), 2, BigDecimal.ROUND_DOWN);
+			prereqSpan1 = toolUtil.getBigDecMax(hspan1arr).add(toolUtil.getBigDecMin(lspan1arr)).add(toolUtil.getBigDecMax(hspan2arr).add(toolUtil.getBigDecMin(lspan2arr))).divide(BigDecimal.valueOf(4), 2, BigDecimal.ROUND_DOWN);
+			prereqSpan2 = toolUtil.getBigDecMax(hspanParr).add(toolUtil.getBigDecMin(lspanParr)).divide(BigDecimal.valueOf(2), 2, BigDecimal.ROUND_DOWN);;
 			
 			result.put("changeline", changeline);
 			result.put("standardline", standardline);
@@ -141,7 +141,7 @@ public class ChartService {
 		return result;
 	}
 	
-	public Map<String, Object> getBBMin(String coinNm, int cType, int stand, double d){
+	public Map<String, Object> getBBMin(String coinNm, int cType, int stand, double d) throws Exception{
 		Map<String, Object> result = new HashMap<String, Object>();
 		JSONObject temp = null;
 		BigDecimal stdDev = null;//표준편차 담아둘 예정
@@ -161,8 +161,8 @@ public class ChartService {
 		
 		ma = BigDecimal.valueOf(toolUtil.getAvg(arr));
 		stdDev = toolUtil.getStddev(arr, 1);
-		highbb = ma.add(stdDev.divide(BigDecimal.valueOf(d)));
-		lowbb = ma.subtract(stdDev.divide(BigDecimal.valueOf(d)));
+		highbb = ma.add(stdDev.divide(BigDecimal.valueOf(d), 2, BigDecimal.ROUND_DOWN));
+		lowbb = ma.subtract(stdDev.divide(BigDecimal.valueOf(d), 2, BigDecimal.ROUND_DOWN));
 		
 		result.put("ma", ma);
 		result.put("highbb", highbb);

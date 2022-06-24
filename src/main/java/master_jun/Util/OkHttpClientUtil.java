@@ -17,33 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
 
 
 
 @Component
-public class OkHttpClientUtil {
-	
-	@Autowired
-	Gson gson = new Gson();
-	
-	/**
-	 * String 형에는 원하는 값을 넣으셈 ex) trade_price // 현재가 trade.... 
-	 * JSONArray 에는 JSONArray 값 넣어주면 알아서 됨
-	 * JSONArray 안에 있는 값중에서 원하는 value 뽑아주는 메서드임
-	 * @date 2022. 6. 24.
-	 * @author 레서드
-	 * @param getValue
-	 * @param jsonArr
-	 * @return
-	 * @throws Exception
-	 */
-	public Object getJsonValue(String getValue, JSONArray jsonArr) throws Exception{
-		JSONObject jso = null;
-		for(Object obj: jsonArr) 
-			jso = (JSONObject) obj;
-		return jso.get(getValue);
-	}
+public class OkHttpClientUtil {	
 	
 	/**
 	 * JSON String to JSONArray
@@ -53,7 +31,7 @@ public class OkHttpClientUtil {
 	 * @param queryElements
 	 * @return JSONArray // JSONArray로 재탄생시킨다.
 	 * @throws ParseException 
-	 */
+	 */ 
 	public JSONArray getJsonToList(String jsonString) throws ParseException{
 		return (JSONArray) new JSONParser().parse(jsonString);
 	}
@@ -66,8 +44,7 @@ public class OkHttpClientUtil {
 		market_warning	유의 종목 여부
 		NONE (해당 사항 없음), CAUTION(투자유의)	String
 	 * */
-	
-	public String getMarketCd() throws IOException, InterruptedException {
+	public JSONArray getMarketCd() throws Exception {
 		
 		HttpRequest request = HttpRequest.newBuilder()
 			    .uri(URI.create("https://api.upbit.com/v1/market/all?isDetails=false"))
@@ -77,9 +54,9 @@ public class OkHttpClientUtil {
 
 			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-			//System.out.println(response.body());
+			System.out.println(response.body());
 		
-		return response.body();
+		return (JSONArray) new JSONParser().parse(response.body());
 	}
 
 	/* 캔들조회 분봉
@@ -96,8 +73,8 @@ public class OkHttpClientUtil {
 		unit	분 단위(유닛)	Integer
 	 * */
 	@ResponseBody
-	public JSONArray getCandleMin(String CandleType, String maketCd, String cnt, String date ) {
-		JSONArray jsnarray= null;
+	public JSONArray getCandleMin(String CandleType, String maketCd, String cnt, String date ) throws Exception {
+		JSONArray jsonarray= null;
 		HttpRequest request= null;
 		if(date.equals("")) {
 			request = HttpRequest.newBuilder()
@@ -118,11 +95,11 @@ public class OkHttpClientUtil {
 			try {
 				response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 				System.out.println(response.statusCode());
-				jsnarray = new JSONArray();
+				jsonarray = new JSONArray();
 				/* Object objtemp = null; */
 				JSONParser jsonParser=new JSONParser();
 				//objtemp = jsonParser.parse(response.body());
-				jsnarray = (JSONArray) jsonParser.parse(response.body());
+				jsonarray = (JSONArray) jsonParser.parse(response.body());
 			} catch (IOException | InterruptedException | ParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -132,7 +109,7 @@ public class OkHttpClientUtil {
 			/*
 			 * System.out.println(json); System.out.println(response.body());
 			 */
-		return jsnarray;
+		return jsonarray;
 	}
 	
 	/*
@@ -152,7 +129,7 @@ public class OkHttpClientUtil {
 	change_rate	전일 종가 대비 변화량	Double
 	converted_trade_price	종가 환산 화폐 단위로 환산된 가격(요청에 convertingPriceUnit 파라미터 없을 시 해당 필드 포함되지 않음.)	Double
 	*/
-	public String getCandleDay(String CandleType, String maketCd, String cnt) throws IOException, InterruptedException {
+	public String getCandleDay(String CandleType, String maketCd, String cnt) throws Exception {
 
 		HttpRequest request = HttpRequest.newBuilder()
 			    .uri(URI.create("https://api.upbit.com/v1/candles/days/"+CandleType+"?market="+maketCd+"&count="+cnt))
@@ -167,7 +144,7 @@ public class OkHttpClientUtil {
 	}
 
 	/* 체결조회 */
-	public String getTradesTicks() throws IOException, InterruptedException {
+	public String getTradesTicks()  throws Exception {
 		HttpRequest request = HttpRequest.newBuilder()
 
 			    .uri(URI.create("https://api.upbit.com/v1/trades/ticks?count=1"))
@@ -186,7 +163,7 @@ public class OkHttpClientUtil {
 	}
 
 	/* 현재가 정보 */
-	public String getTicker(String market) throws IOException, InterruptedException {
+	public JSONObject getTicker(String market) throws Exception {
 		HttpRequest request = HttpRequest.newBuilder()
 
 			    .uri(URI.create("https://api.upbit.com/v1/ticker?markets="+market))
@@ -201,7 +178,7 @@ public class OkHttpClientUtil {
 
 			//System.out.println(response.body());
 			
-		return response.body();
+		return (JSONObject) new JSONParser().parse(response.body());
 	}
 
 	/* 호가정보 */
@@ -220,6 +197,6 @@ public class OkHttpClientUtil {
 
 			System.out.println(response.body());
 		
-		return "";
+		return response.body();
 	}
 }
