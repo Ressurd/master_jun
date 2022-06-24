@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
@@ -13,12 +14,8 @@ import org.springframework.web.servlet.ModelAndView;
 
 /**
  * 코인값 조회 컨트롤러
- * 주로 스케쥴러 돌려서 만들거긴함~
- * 
- * 나중에 웹소켓이던 뭐던..
- * @since 20220624
- * @author ressu
- * @category Inquire
+ * @date 2022. 6. 24.
+ * @author 레서드
  *
  */
 @Controller
@@ -29,7 +26,9 @@ public class InquireController {
 	public InquireService inquireService;
 	
 	/**
-	 * 나중에 뷰페이지
+	 * 임시 뷰페이지
+	 * @date 2022. 6. 24.
+	 * @author 레서드
 	 * @param request
 	 */
 	@RequestMapping(value="/InquireViewPage")
@@ -37,7 +36,9 @@ public class InquireController {
 		
 	}
 	/**
-	 * 화면조회
+	 * 조회화면으로 쓸것.
+	 * @date 2022. 6. 24.
+	 * @author 레서드
 	 * @param request
 	 * @return
 	 */
@@ -51,17 +52,19 @@ public class InquireController {
 	
 	/**
 	 * 스케줄러
-	 * @throws IOException
-	 * @throws InterruptedException
+	 * @date 2022. 6. 24.
+	 * @author 레서드
+	 * @throws Exception 
 	 */
 	//@Scheduled(cron="*/1 * * * * *")
 	@Scheduled(fixedDelay=1000)
-	public void ScheduleJob() throws IOException, InterruptedException {
+	public void ScheduleJob() throws Exception {
 		inquireService.job("fixedDelay");
 	}
+	
 	//@Scheduled(cron="*/2 * * * * *")
-	@Scheduled(fixedDelay=1000)
-	public void ScheduleJob2() throws IOException, InterruptedException {
-		inquireService.job("fixedDelay2");
-	}
+	/*
+	 * @Scheduled(fixedDelay=1000) public void ScheduleJob2() throws IOException,
+	 * InterruptedException { inquireService.job("fixedDelay2"); }
+	 */
 }

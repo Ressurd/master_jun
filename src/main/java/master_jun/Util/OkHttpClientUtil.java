@@ -27,6 +27,13 @@ public class OkHttpClientUtil {
 	@Autowired
 	Gson gson = new Gson();
 	
+	public Object getJsonValue(String getValue, JSONArray jsonArr) throws Exception{
+		JSONObject jso = null;
+		for(Object obj: jsonArr) 
+			jso = (JSONObject) obj;
+		return jso.get(getValue);
+	}
+	
 	/**
 	 * JSON String to JSONArray
 	 * @date 2022. 6. 24.
