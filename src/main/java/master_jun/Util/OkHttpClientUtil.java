@@ -22,28 +22,7 @@ import com.google.gson.Gson;
 
 
 @Component
-public class OkHttpClientUtil {
-	
-	@Autowired
-	Gson gson = new Gson();
-	
-	/**
-	 * String 형에는 원하는 값을 넣으셈 ex) trade_price // 현재가 trade.... 
-	 * JSONArray 에는 JSONArray 값 넣어주면 알아서 됨
-	 * JSONArray 안에 있는 값중에서 원하는 value 뽑아주는 메서드임
-	 * @date 2022. 6. 24.
-	 * @author 레서드
-	 * @param getValue
-	 * @param jsonArr
-	 * @return
-	 * @throws Exception
-	 */
-	public Object getJsonValue(String getValue, JSONArray jsonArr) throws Exception{
-		JSONObject jso = null;
-		for(Object obj: jsonArr) 
-			jso = (JSONObject) obj;
-		return jso.get(getValue);
-	}
+public class OkHttpClientUtil {	
 	
 	/**
 	 * JSON String to JSONArray
@@ -53,7 +32,7 @@ public class OkHttpClientUtil {
 	 * @param queryElements
 	 * @return JSONArray // JSONArray로 재탄생시킨다.
 	 * @throws ParseException 
-	 */
+	 */ 
 	public JSONArray getJsonToList(String jsonString) throws ParseException{
 		return (JSONArray) new JSONParser().parse(jsonString);
 	}
@@ -66,8 +45,7 @@ public class OkHttpClientUtil {
 		market_warning	유의 종목 여부
 		NONE (해당 사항 없음), CAUTION(투자유의)	String
 	 * */
-	
-	public String getMarketCd() throws IOException, InterruptedException {
+	public JSONObject getMarketCd() throws IOException, InterruptedException {
 		
 		HttpRequest request = HttpRequest.newBuilder()
 			    .uri(URI.create("https://api.upbit.com/v1/market/all?isDetails=false"))
@@ -118,11 +96,11 @@ public class OkHttpClientUtil {
 			try {
 				response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 				System.out.println(response.statusCode());
-				jsnarray = new JSONArray();
+				jsonarray = new JSONArray();
 				/* Object objtemp = null; */
 				JSONParser jsonParser=new JSONParser();
 				//objtemp = jsonParser.parse(response.body());
-				jsnarray = (JSONArray) jsonParser.parse(response.body());
+				jsonarray = (JSONArray) jsonParser.parse(response.body());
 			} catch (IOException | InterruptedException | ParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -132,7 +110,7 @@ public class OkHttpClientUtil {
 			/*
 			 * System.out.println(json); System.out.println(response.body());
 			 */
-		return jsnarray;
+		return jsonarray;
 	}
 	
 	/*
@@ -186,7 +164,7 @@ public class OkHttpClientUtil {
 	}
 
 	/* 현재가 정보 */
-	public String getTicker(String market) throws IOException, InterruptedException {
+	public JSONObject getTicker(String market) throws IOException, InterruptedException {
 		HttpRequest request = HttpRequest.newBuilder()
 
 			    .uri(URI.create("https://api.upbit.com/v1/ticker?markets="+market))
@@ -220,6 +198,6 @@ public class OkHttpClientUtil {
 
 			System.out.println(response.body());
 		
-		return "";
+		return response.body();
 	}
 }
