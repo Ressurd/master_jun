@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.apache.http.HttpEntity;
@@ -54,7 +55,7 @@ public class OkHttpClientUtil {
 
 			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-			System.out.println(response.body());
+			/* System.out.println(response.body()); */
 		
 		return (JSONArray) new JSONParser().parse(response.body());
 	}
@@ -94,7 +95,7 @@ public class OkHttpClientUtil {
 			HttpResponse<String> response;
 			try {
 				response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-				System.out.println(response.statusCode());
+				/* System.out.println(response.statusCode()); */
 				jsonarray = new JSONArray();
 				/* Object objtemp = null; */
 				JSONParser jsonParser=new JSONParser();
@@ -163,22 +164,19 @@ public class OkHttpClientUtil {
 	}
 
 	/* 현재가 정보 */
-	public JSONObject getTicker(String market) throws Exception {
+	public JSONArray getTicker(String market) throws Exception {
 		HttpRequest request = HttpRequest.newBuilder()
-
 			    .uri(URI.create("https://api.upbit.com/v1/ticker?markets="+market))
-
 			    .header("Accept", "application/json")
-
 			    .method("GET", HttpRequest.BodyPublishers.noBody())
-
 			    .build();
 
 			HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-			//System.out.println(response.body());
+	        // JSONParser로 JSONObject로 변환
+			//System.out.println(response.body()); 
 			
-		return (JSONObject) new JSONParser().parse(response.body());
+		return (JSONArray) new JSONParser().parse(response.body());
 	}
 
 	/* 호가정보 */

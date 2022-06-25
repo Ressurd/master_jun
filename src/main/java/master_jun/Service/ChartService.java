@@ -2,6 +2,7 @@ package master_jun.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -26,10 +27,61 @@ public class ChartService {
 	@Autowired
 	ToolUtil toolUtil;
 	
+	static JSONArray candle= null;
+	
 	public JSONArray getMarketCd()  throws Exception {
 		okhttpClientUtil = new OkHttpClientUtil();
 
 		return okhttpClientUtil.getMarketCd();
+	}
+	
+	public List<Map> getCoinList(String market) throws Exception {
+		
+		okhttpClientUtil = new OkHttpClientUtil();
+		toolUtil = new ToolUtil();
+		JSONArray coinList = okhttpClientUtil.getMarketCd();
+		List<Map> resultList = new ArrayList<Map>();
+		List<Map> tempList = new ArrayList<Map>();
+		String coinStr="";
+		JSONObject tmp = null;
+		// 
+		int cnt = 0;
+		
+		for(int i =0; i<coinList.size(); i++) {
+			tmp=(JSONObject) coinList.get(i);
+			if(tmp.get("market").toString().matches(market+"-(.*)")) {
+				if(tmp.get("market").toString().equals("KRW-BTT") || tmp.get("market").toString().equals("KRW-XEC")) {
+					continue;
+				}
+				if(coinStr.equals("")) {
+					coinStr = tmp.get("market").toString();
+				}else {
+					coinStr = coinStr + "," + tmp.get("market").toString();
+				}
+			}
+		}
+		
+		coinList = okhttpClientUtil.getTicker(coinStr);
+		
+		for(int i =0; i<coinList.size(); i++) {
+			
+			  tmp=(JSONObject) coinList.get(i);
+			  HashMap tmpMap = new HashMap<String, BigDecimal>();
+			  tmpMap.put("market", tmp.get("market")); //).get("acc_trade_price_24h");
+			  tmpMap.put("acc_trade_price_24h", BigDecimal.valueOf(Double.parseDouble(tmp.get("acc_trade_price_24h").toString())).setScale(0, RoundingMode.DOWN));
+			 // System.out.println(tmpMap);
+			  tempList.add(tmpMap); 
+			  cnt++;
+		}
+		
+		resultList = toolUtil.getBubble(tempList);
+		
+		for(int i=0; i< resultList.size();i++) {
+			System.out.println("원화 코인 : " +resultList.get(i).get("market")+ " \t" +resultList.get(i).get("acc_trade_price_24h"));
+		}
+		System.out.println("원화 코인 수 : " +cnt);
+		
+		return resultList;
 	}
 	
 	public Map <String, Object> getIchimokuBTMin(String coinNm,int stand, int num1, int num2, int num3, int num4) throws Exception {
@@ -57,13 +109,12 @@ public class ChartService {
 		
 		okhttpClientUtil = new OkHttpClientUtil();
 		
-		System.out.println("????");
-		
 		toolUtil = new ToolUtil();
-		
-		System.out.println("date "+ toolUtil.getCalendarCalc(today, "M", "-", num1));
-		
-		JSONArray hspan1Src = okhttpClientUtil.getCandleMin(Integer.toString(stand), coinNm, "200", toolUtil.getCalendarCalc(today, "M", "-", stand));
+		/*
+		 * System.out.println("date "+ toolUtil.getCalendarCalc(today, "M", "-", num1));
+		 */
+		if(candle == null)
+			candle = okhttpClientUtil.getCandleMin(Integer.toString(stand), coinNm, "200", "");
 		/*
 		 * JSONArray hspan2Src = okhttpClientUtil.getCandleMin(Integer.toString(stand),
 		 * coinNm, Integer.toString(num2), toolUtil.getCalendarCalc(today, "M", "-",
@@ -78,27 +129,27 @@ public class ChartService {
 		
 		if(num1 <= 200 && num2 <= 200 && num3 <= 200 && Csize <= 200 && Ssize <= 200) {
 			for(int i=0; i<num1; i++) {
-				temp = (JSONObject)hspan1Src.get(i);
+				temp = (JSONObject)candle.get(i);
 				hspanCarr.add(BigDecimal.valueOf(Double.parseDouble(temp.get("high_price").toString())));
 				lspanCarr.add(BigDecimal.valueOf(Double.parseDouble(temp.get("low_price").toString())));
 			}
 			for(int i=0; i<num2; i++) {
-				temp = (JSONObject)hspan1Src.get(i);
+				temp = (JSONObject)candle.get(i);
 				hspanSarr.add(BigDecimal.valueOf(Double.parseDouble(temp.get("high_price").toString())));
 				lspanSarr.add(BigDecimal.valueOf(Double.parseDouble(temp.get("low_price").toString())));
 			}
 			for(int i=num4-1; i<Csize; i++) {
-				temp = (JSONObject)hspan1Src.get(i);
+				temp = (JSONObject)candle.get(i);
 				hspan1arr.add(BigDecimal.valueOf(Double.parseDouble(temp.get("high_price").toString())));
 				lspan1arr.add(BigDecimal.valueOf(Double.parseDouble(temp.get("low_price").toString())));
 			}
 			for(int i=num4-1; i<Ssize; i++) {
-				temp = (JSONObject)hspan1Src.get(i);
+				temp = (JSONObject)candle.get(i);
 				hspan2arr.add(BigDecimal.valueOf(Double.parseDouble(temp.get("high_price").toString())));
 				lspan2arr.add(BigDecimal.valueOf(Double.parseDouble(temp.get("low_price").toString())));
 			}
 			for(int i=num4-1; i<num3+num4; i++) {
-				temp = (JSONObject)hspan1Src.get(i);
+				temp = (JSONObject)candle.get(i);
 				hspanParr.add(BigDecimal.valueOf(Double.parseDouble(temp.get("high_price").toString())));
 				lspanParr.add(BigDecimal.valueOf(Double.parseDouble(temp.get("low_price").toString())));
 			}
@@ -130,13 +181,14 @@ public class ChartService {
 			result.put("high_prereqSpan", prereqSpan2);
 			result.put("row_prereqSpan", prereqSpan1);
 		}
-		
-		System.out.println("changeline  "+changeline.toPlainString());
-		System.out.println("standardline  "+standardline.toPlainString());
-		System.out.println("prereqSpan1  "+prereqSpan1.toPlainString());
-		System.out.println("prereqSpan2  "+prereqSpan2.toPlainString());
-		System.out.println("high_prereqSpan  "+result.get("high_prereqSpan"));
-		System.out.println("row_prereqSpan  "+result.get("row_prereqSpan"));
+		/*
+		 * System.out.println("changeline  "+changeline.toPlainString());
+		 * System.out.println("standardline  "+standardline.toPlainString());
+		 * System.out.println("prereqSpan1  "+prereqSpan1.toPlainString());
+		 * System.out.println("prereqSpan2  "+prereqSpan2.toPlainString());
+		 * System.out.println("high_prereqSpan  "+result.get("high_prereqSpan"));
+		 * System.out.println("row_prereqSpan  "+result.get("row_prereqSpan"));
+		 */
 		
 		return result;
 	}
@@ -150,8 +202,8 @@ public class ChartService {
 		BigDecimal lowbb = null;//하단선 담아둘 예정
 		List<Double> arr = new ArrayList<Double>();//전환선용 고가 목록
 		
-		JSONArray candle = okhttpClientUtil.getCandleMin(Integer.toString(cType), coinNm, Integer.toString(stand), "");
-		
+		if(candle == null)
+			candle = okhttpClientUtil.getCandleMin(Integer.toString(stand), coinNm, "200", "");
 		for(int i=1; i<stand; i++) {
 			temp = (JSONObject)candle.get(i);
 			arr.add(Double.parseDouble(temp.get("trade_price").toString()));
@@ -168,12 +220,18 @@ public class ChartService {
 		result.put("highbb", highbb);
 		result.put("lowbb", lowbb);
 		
-		System.out.println("ma  "+ma.toPlainString());
-		System.out.println("stdDev  "+stdDev.toPlainString());
-		System.out.println("highbb  "+highbb.toPlainString());
-		System.out.println("lowbb  "+lowbb.toPlainString());
+		/*
+		 * System.out.println("ma  "+ma.toPlainString());
+		 * System.out.println("stdDev  "+stdDev.toPlainString());
+		 * System.out.println("highbb  "+highbb.toPlainString());
+		 * System.out.println("lowbb  "+lowbb.toPlainString());
+		 */
 	
 		return result;
+	}
+	
+	public void free() {
+		candle = null;
 	}
 
 }

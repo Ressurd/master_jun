@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
@@ -21,14 +22,12 @@ public class ToolUtil {
 	public String getCalendarCalc(Date date, String typeCd ,String code, int num ) {
 		
 		String result = "";
-		String n="M";
+		String n = "M";
 		
 		SimpleDateFormat upbitdate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 		Calendar cal = Calendar.getInstance(); 
 		cal.setTime(date);
-		
-		System.out.println("standarddate: " + date + typeCd + code + num + typeCd.equals("M")+code.equals("-"));
 		
 		if(typeCd.equals("M") && code.equals("-")) {
 			cal.add(Calendar.MINUTE, -num);
@@ -47,7 +46,7 @@ public class ToolUtil {
 		result = upbitdate.format(cal.getTime()); 
 		result = result.replaceAll(":", "%3A").replaceAll(" ", "%20");
 		
-		System.out.println("standarddate: " + result);
+		/* System.out.println("standarddate: " + result); */
 		
 		return result;
 	}
@@ -125,5 +124,30 @@ public class ToolUtil {
 
 	}
 	
+	/*
+	 * 정렬
+	 * */
+	public List<Map> getBubble(List<Map> list){
+		
+		Map jtempMap = null;
+		Map itempMap = null;
+		BigDecimal itemp = null;
+		BigDecimal jtemp = null;
+		
+		for (int i=1; i<list.size(); i++) {
+			for(int j=0; j<list.size()-i; j++) {
+				itempMap = list.get(j+1);
+				itemp = (BigDecimal) itempMap.get("acc_trade_price_24h");
+				jtempMap = list.get(j);
+				jtemp = (BigDecimal) jtempMap.get("acc_trade_price_24h");
+				if (jtemp.compareTo(itemp) == -1) {
+					list.set(j+1, jtempMap);
+					list.set(j, itempMap);
+				}
+	            	
+			}
+        }
+		return list;
+	}
 	
 }
