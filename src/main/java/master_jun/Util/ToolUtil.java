@@ -93,7 +93,7 @@ public class ToolUtil {
 	    }
 	    
 
-	    String formattedResult = String.format("%.2f", sum / arr.size());
+	    String formattedResult = String.format("%.4f", sum / arr.size());
 
 	    return Double.parseDouble(formattedResult);
 	}
@@ -117,7 +117,7 @@ public class ToolUtil {
 	      sum += diff * diff;
 	    }
 	    
-	    String formattedResult = String.format("%.2f", Math.sqrt(sum / (arr.size() - option)));
+	    String formattedResult = String.format("%.4f", Math.sqrt(sum / (arr.size() - option)));
 	    sd= Double.parseDouble(formattedResult);
 
 	    return BigDecimal.valueOf(sd);

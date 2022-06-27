@@ -160,10 +160,10 @@ public class ChartService {
 		 * (hspan1arr.get(h1size-1).doubleValue()+lspan1arr.get(0).doubleValue())/2;
 		 */
 		try {
-			changeline = toolUtil.getBigDecMax(hspanCarr).add(toolUtil.getBigDecMin(lspanCarr)).divide(BigDecimal.valueOf(2), 2, BigDecimal.ROUND_DOWN);
-			standardline = toolUtil.getBigDecMax(hspanSarr).add(toolUtil.getBigDecMin(lspanSarr)).divide(BigDecimal.valueOf(2), 2, BigDecimal.ROUND_DOWN);
-			prereqSpan1 = toolUtil.getBigDecMax(hspan1arr).add(toolUtil.getBigDecMin(lspan1arr)).add(toolUtil.getBigDecMax(hspan2arr).add(toolUtil.getBigDecMin(lspan2arr))).divide(BigDecimal.valueOf(4), 2, BigDecimal.ROUND_DOWN);
-			prereqSpan2 = toolUtil.getBigDecMax(hspanParr).add(toolUtil.getBigDecMin(lspanParr)).divide(BigDecimal.valueOf(2), 2, BigDecimal.ROUND_DOWN);;
+			changeline = toolUtil.getBigDecMax(hspanCarr).add(toolUtil.getBigDecMin(lspanCarr)).divide(BigDecimal.valueOf(2), 4, BigDecimal.ROUND_DOWN);
+			standardline = toolUtil.getBigDecMax(hspanSarr).add(toolUtil.getBigDecMin(lspanSarr)).divide(BigDecimal.valueOf(2), 4, BigDecimal.ROUND_DOWN);
+			prereqSpan1 = toolUtil.getBigDecMax(hspan1arr).add(toolUtil.getBigDecMin(lspan1arr)).add(toolUtil.getBigDecMax(hspan2arr).add(toolUtil.getBigDecMin(lspan2arr))).divide(BigDecimal.valueOf(4), 4, BigDecimal.ROUND_DOWN);
+			prereqSpan2 = toolUtil.getBigDecMax(hspanParr).add(toolUtil.getBigDecMin(lspanParr)).divide(BigDecimal.valueOf(2), 4, BigDecimal.ROUND_DOWN);;
 			
 			result.put("changeline", changeline);
 			result.put("standardline", standardline);
@@ -176,10 +176,10 @@ public class ChartService {
 		
 		if(prereqSpan1.compareTo(prereqSpan2)==1) {
 			result.put("high_prereqSpan", prereqSpan1);
-			result.put("row_prereqSpan", prereqSpan2);
+			result.put("low_prereqSpan", prereqSpan2);
 		}else {
 			result.put("high_prereqSpan", prereqSpan2);
-			result.put("row_prereqSpan", prereqSpan1);
+			result.put("low_prereqSpan", prereqSpan1);
 		}
 		/*
 		 * System.out.println("changeline  "+changeline.toPlainString());
@@ -187,7 +187,7 @@ public class ChartService {
 		 * System.out.println("prereqSpan1  "+prereqSpan1.toPlainString());
 		 * System.out.println("prereqSpan2  "+prereqSpan2.toPlainString());
 		 * System.out.println("high_prereqSpan  "+result.get("high_prereqSpan"));
-		 * System.out.println("row_prereqSpan  "+result.get("row_prereqSpan"));
+		 * System.out.println("low_prereqSpan  "+result.get("low_prereqSpan"));
 		 */
 		
 		return result;
@@ -213,8 +213,8 @@ public class ChartService {
 		
 		ma = BigDecimal.valueOf(toolUtil.getAvg(arr));
 		stdDev = toolUtil.getStddev(arr, 1);
-		highbb = ma.add(stdDev.divide(BigDecimal.valueOf(d), 2, BigDecimal.ROUND_DOWN));
-		lowbb = ma.subtract(stdDev.divide(BigDecimal.valueOf(d), 2, BigDecimal.ROUND_DOWN));
+		highbb = ma.add(stdDev.divide(BigDecimal.valueOf(d), 4, BigDecimal.ROUND_DOWN));
+		lowbb = ma.subtract(stdDev.divide(BigDecimal.valueOf(d), 4, BigDecimal.ROUND_DOWN));
 		
 		result.put("ma", ma);
 		result.put("highbb", highbb);
@@ -228,6 +228,33 @@ public class ChartService {
 		 */
 	
 		return result;
+	}
+	
+	public BigDecimal getMAMin(String coinNm, int cType, int stand) throws Exception{
+		
+		JSONObject temp = null;
+		List<Double> arr = new ArrayList<Double>();//전환선용 고가 목록
+		
+		if(candle == null)
+			candle = okhttpClientUtil.getCandleMin(Integer.toString(stand), coinNm, "200", "");
+		for(int i=1; i<stand; i++) {
+			temp = (JSONObject)candle.get(i);
+			arr.add(Double.parseDouble(temp.get("trade_price").toString()));
+		}
+		
+		toolUtil = new ToolUtil();
+		
+		
+		
+		
+		/*
+		 * System.out.println("ma  "+ma.toPlainString());
+		 * System.out.println("stdDev  "+stdDev.toPlainString());
+		 * System.out.println("highbb  "+highbb.toPlainString());
+		 * System.out.println("lowbb  "+lowbb.toPlainString());
+		 */
+	
+		return BigDecimal.valueOf(toolUtil.getAvg(arr));
 	}
 	
 	public void free() {
