@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+<head>
+<meta charset="UTF-8">
+<title>InquireBoard</title>
+</head>
+<body>
+조회를 해보아요
+
+<form name="data-form" action="InquireInsert" method="POST">
+	<table id = "input-table" class="table table-borderd colored-table shadow" border=1>
+		<tbody style="margin-top:50px">
+			<tr>
+				<td>매수금액</td>
+				<td>얏호</td>
+			</tr>
+			<tr>
+				<td>input money = <input type=text id="buyCoinMoney" name="buyCoinMoney"></td>
+				<td><input type=button id="buyCoin" name="buyCoin" value="매 수"></td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+</body>
+
+
+<script>
+$(document).ready(function () {
+	var inputData = {"buyCoinMoney": $("#buyCoinMoney").val(), "buyCoin": $("#buyCoin")} ;
+	$.ajax({
+		url: "/buyCoin",
+		type: "POST",
+		data: JSON.stringify(inputData),
+		dataType: "json",
+		contentType: "application/json;charset=UTF-8",
+		async: false,
+		success: function(data){
+			if(data.length==0){
+				alert('없음.,.');
+			} else {
+				console.log(data);
+			} for(var i = 0; i<data.length; i++){
+				var id = data[i]['id'];
+				var name = data[i]['name'];
+				var buyCoinMoney = data[i]['buyCoinMoney'];
+				var buyCoin = data[i]['buyCoin'];
+			}
+			
+		}, error: function(xhr, status, error){ alert(xhr.responseText); },
+		complete: function(xhr, status){}
+		
+	})
+})
+
+</script>
+
+</html>
