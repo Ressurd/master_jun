@@ -1,24 +1,30 @@
 package master_jun.Inquire;
 
 import java.io.IOException;
-import java.time.LocalTime;
-import java.util.List;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.google.gson.Gson;
 
 import master_jun.Service.ChartService;
 import master_jun.Service.ExchangeService;
 import master_jun.Util.OkHttpClientUtil;
-
 
 /**
  * 코인값 조회 서비스
@@ -41,30 +47,105 @@ public class InquireService {
 	public ExchangeService es;
 	
 	
-	/**
-	 * 나중에 job기능을 이용해서 스케줄러 이용하기.
-	 * 추가할 기능 정리
-	 *  1. 마켓값 넘기는 ExchangeService 이용
-	 *  2. 현재 String으로 나오는데 저기 서비스에서 String to JSON (or List<Map>) 변환 필요
-	 *  3. 1초마다 제대로 값이 불러와지는지 확인하기.
-	 * @date 2022. 6. 24.
-	 * @author 레서드
-	 * @param option
-	 * @throws Exception 
-	 */
-	public void job(String option) throws Exception { 
-		JSONArray jsnarray= null;
-        System.out.println(option + " scheduling job start : " + LocalTime.now());
-		//System.out.println(ohcu.getTicker("KRW-BTC"));
-		jsnarray = new JSONArray();
-		JSONParser jsonParser=new JSONParser();
-		jsnarray = (JSONArray) jsonParser.parse(ohcu.getMarketCd());
-		//System.out.println(jsnarray);
-		jsnarray = (JSONArray) jsonParser.parse(ohcu.getTicker("KRW-BTC"));
-		//System.out.println(jsnarray);
-		//System.out.println(ohcu.getJsonToList(ohcu.getTicker("KRW-BTC")));
-		System.out.println(ohcu.getJsonValue("trade_price", ohcu.getJsonToList(ohcu.getTicker("KRW-BTC"))));
+	public void buyCoin(String CoinNM, String volume) throws Exception{
+		String accessKey = "님 엑세스키";
+        String secretKey = "님 쉬크릿 키";
+        String serverUrl = "https://api.upbit.com";
+        
+        String temp = null;
+        double templong = 5000d;
+        double reall = 0d;
+        reall = templong / Double.parseDouble(volume);
+        
+        System.out.println(reall);
+        temp = Double.toString(reall);
 		
-        System.out.println(option + " scheduling job end : " + LocalTime.now()); 
-    } 
+		HashMap<String, String> params = new HashMap<>();
+		params.put("market", CoinNM);
+		params.put("side", "bid");
+		params.put("volume", temp);
+		params.put("price", "5000");
+		params.put("ord_type", "limit");
+
+		ArrayList<String> queryElements = new ArrayList<>();
+		for (Map.Entry<String, String> entity : params.entrySet()) {
+			queryElements.add(entity.getKey() + "=" + entity.getValue());
+		}
+
+		String queryString = String.join("&", queryElements.toArray(new String[0]));
+
+		MessageDigest md = MessageDigest.getInstance("SHA-512");
+		md.update(queryString.getBytes("UTF-8"));
+
+		String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
+
+		Algorithm algorithm = Algorithm.HMAC256(secretKey);
+		String jwtToken = JWT.create().withClaim("access_key", accessKey)
+				.withClaim("nonce", UUID.randomUUID().toString()).withClaim("query_hash", queryHash)
+				.withClaim("query_hash_alg", "SHA512").sign(algorithm);
+
+		String authenticationToken = "Bearer " + jwtToken;
+
+		try {
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpPost request = new HttpPost(serverUrl + "/v1/orders");
+			request.setHeader("Content-Type", "application/json");
+			request.addHeader("Authorization", authenticationToken);
+			request.setEntity(new StringEntity(new Gson().toJson(params)));
+
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+
+			System.out.println(EntityUtils.toString(entity, "UTF-8"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		 
+	}
+	
+	public void sellCoin(String CoinNM) throws Exception{
+		String accessKey = "님 엑세스키";
+        String secretKey = "님 쉬크릿 키";
+        String serverUrl = "https://api.upbit.com";
+        
+		HashMap<String, String> params = new HashMap<>();
+		params.put("market", CoinNM);
+		params.put("side", "ask");
+		params.put("ord_type", "market");
+
+		ArrayList<String> queryElements = new ArrayList<>();
+		for (Map.Entry<String, String> entity : params.entrySet()) {
+			queryElements.add(entity.getKey() + "=" + entity.getValue());
+		}
+
+		String queryString = String.join("&", queryElements.toArray(new String[0]));
+
+		MessageDigest md = MessageDigest.getInstance("SHA-512");
+		md.update(queryString.getBytes("UTF-8"));
+
+		String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
+
+		Algorithm algorithm = Algorithm.HMAC256(secretKey);
+		String jwtToken = JWT.create().withClaim("access_key", accessKey)
+				.withClaim("nonce", UUID.randomUUID().toString()).withClaim("query_hash", queryHash)
+				.withClaim("query_hash_alg", "SHA512").sign(algorithm);
+
+		String authenticationToken = "Bearer " + jwtToken;
+
+		try {
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpPost request = new HttpPost(serverUrl + "/v1/orders");
+			request.setHeader("Content-Type", "application/json");
+			request.addHeader("Authorization", authenticationToken);
+			request.setEntity(new StringEntity(new Gson().toJson(params)));
+
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+
+			System.out.println(EntityUtils.toString(entity, "UTF-8"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		 
+	}
 }
