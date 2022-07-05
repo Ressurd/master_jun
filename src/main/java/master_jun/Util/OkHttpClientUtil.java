@@ -48,7 +48,7 @@ public class OkHttpClientUtil {
 	public JSONArray getMarketCd() throws Exception {
 		
 		HttpRequest request = HttpRequest.newBuilder()
-			    .uri(URI.create("https://api.upbit.com/v1/market/all?isDetails=false"))
+			    .uri(URI.create("https://api.upbit.com/v1/market/all?isDetails=true"))
 			    .header("Accept", "application/json")
 			    .method("GET", HttpRequest.BodyPublishers.noBody())
 			    .build();
