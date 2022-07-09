@@ -22,7 +22,7 @@ public class ExchangeService {
 	
 	
 	/* 총자산 조회 */
-	public String getAccounts(HashMap<String, String> params, ArrayList<String> queryElements) {
+	public String getAccounts(HashMap<String, String> params) {
 		
 		httpClientUtil = new HttpClientUtil("/v1/accounts");
 		
@@ -30,10 +30,10 @@ public class ExchangeService {
 	}
 
 	/* 주문 가능 조회 */
-	public String getChance(HashMap<String, String> params, ArrayList<String> queryElements) {
+	public String getChance(HashMap<String, String> params) {
 	
 		try {
-			httpClientUtil = new HttpClientUtil("/v1/orders/chance?", params, queryElements);
+			httpClientUtil = new HttpClientUtil("/v1/orders/chance?", params);
 		} catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -43,10 +43,10 @@ public class ExchangeService {
 	}
 
 	/* 개별 주문 조회 */
-	public String getOrderChk(HashMap<String, String> params, ArrayList<String> queryElements) {
+	public String getOrderChk(HashMap<String, String> params) {
 		
 		try {
-			httpClientUtil = new HttpClientUtil("/v1/order?", params, queryElements);
+			httpClientUtil = new HttpClientUtil("/v1/order?", params);
 		} catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -56,10 +56,10 @@ public class ExchangeService {
 	}
 
 	/* 주문 리스트 조회 */
-	public String getOderlist(HashMap<String, String> params, ArrayList<String> queryElements) {
+	public String getOrderlist(HashMap<String, String> params) {
 			
 			try {
-				httpClientUtil = new HttpClientUtil("/v1/orders?", params, queryElements);
+				httpClientUtil = new HttpClientUtil("/v1/orders?", params);
 			} catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -69,10 +69,10 @@ public class ExchangeService {
 		}
 
 	/* 주문 취소 접수 */
-	public String getOrderDel(HashMap<String, String> params, ArrayList<String> queryElements) {
+	public String getOrderDel(HashMap<String, String> params) {
 		
 		try {
-			httpClientUtil = new HttpClientUtil("/v1/order?", params, queryElements);
+			httpClientUtil = new HttpClientUtil("/v1/order?", params);
 		} catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -82,10 +82,10 @@ public class ExchangeService {
 	}
 
 	/* 주문하기 */
-	public String goOrder(HashMap<String, String> params, ArrayList<String> queryElements) {
+	public String goOrder(HashMap<String, String> params) {
 		
 		try {
-			httpClientUtil = new HttpClientUtil("/v1/orders", params, queryElements);
+			httpClientUtil = new HttpClientUtil("/v1/orders", params);
 		} catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -49,13 +49,18 @@ public class HttpClientUtil {
         this.jwtToken = getJwtToken();
 	}
 	
-	public HttpClientUtil(String reqMsg, HashMap<String, String> params, ArrayList<String> queryElements) throws NoSuchAlgorithmException, UnsupportedEncodingException{
+	public HttpClientUtil(String reqMsg, HashMap<String, String> params) throws NoSuchAlgorithmException, UnsupportedEncodingException{
         this.jwtToken = getJwtToken();
         this.params = params;
-        for(Map.Entry<String, String> entity : params.entrySet()) {
-            queryElements.add(entity.getKey() + "=" + entity.getValue());
+        
+        ArrayList<String> queryElements = new ArrayList<String>();
+        
+        if(params != null) {
+        	for(Map.Entry<String, String> entity : params.entrySet()) {
+                queryElements.add(entity.getKey() + "=" + entity.getValue());
+            }
         }
-
+        
         String queryString = String.join("&", queryElements.toArray(new String[0]));
         MessageDigest md = MessageDigest.getInstance("SHA-512");
         md.update(queryString.getBytes("UTF-8"));
