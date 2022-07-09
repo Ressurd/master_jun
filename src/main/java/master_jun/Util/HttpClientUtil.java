@@ -28,13 +28,16 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import org.apache.http.util.EntityUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Component;
 
 @Component
 public class HttpClientUtil {
 	private final String accessKey = System.getenv("UPBIT_OPEN_API_ACCESS_KEY");
 	private final String secretKey = System.getenv("UPBIT_OPEN_API_SECRET_KEY");
-	private final String serverUrl = System.getenv("UPBIT_OPEN_API_SERVER_URL");
+	private final String serverUrl = "https://api.upbit.com";
     private String jwtToken = "";
     private String reqMsg = "";
     private String queryHash = null;
@@ -104,8 +107,11 @@ public class HttpClientUtil {
 	 * 
 	 * 
 	 * */
-	public String sendUpbitGet() {
+	public JSONArray sendUpbitGet() throws ParseException {
 		String result = "";
+
+        JSONArray jsonarray = new JSONArray();
+        
 		try {
 			String authenticationToken = "Bearer " + jwtToken;
 
@@ -122,15 +128,21 @@ public class HttpClientUtil {
             HttpEntity entity = response.getEntity();
 
             result = EntityUtils.toString(entity, "UTF-8");
-            
-            System.out.println("sendUpbit result: "+result);
+           
+			/* Object objtemp = null; */
+			JSONParser jsonParser = new JSONParser();
+			// objtemp = jsonParser.parse(response.body());
+			jsonarray = (JSONArray) jsonParser.parse(result);
+
 
         } catch (IOException e) {
 
             e.printStackTrace();
 
         }
-		return result;
+		
+		return jsonarray;
+
 	}
 	
 	
@@ -139,8 +151,10 @@ public class HttpClientUtil {
 	 * 주문하기 
 	 * 
 	 * */
-	public String sendUpbitPost() {
+	public JSONArray sendUpbitPost() throws ParseException {
 		String result = "";
+		
+        JSONArray jsonarray = new JSONArray();
 		try {
 			String authenticationToken = "Bearer " + jwtToken;
 
@@ -161,14 +175,20 @@ public class HttpClientUtil {
 
             result = EntityUtils.toString(entity, "UTF-8");
             
-            System.out.println("sendUpbit result: "+result);
+            
+ 			/* Object objtemp = null; */
+ 			JSONParser jsonParser = new JSONParser();
+ 			// objtemp = jsonParser.parse(response.body());
+ 			jsonarray = (JSONArray) jsonParser.parse(result);
 
-        } catch (IOException e) {
 
-            e.printStackTrace();
+         } catch (IOException e) {
 
-        }
-		return result;
+             e.printStackTrace();
+
+         }
+ 		
+ 		return jsonarray;
 	}
 	
 	/* 

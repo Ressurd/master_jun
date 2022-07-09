@@ -7,6 +7,8 @@ import java.util.HashMap;
 
 import javax.annotation.Resource;
 
+import org.json.simple.JSONArray;
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.stereotype.Component;
@@ -22,7 +24,7 @@ public class ExchangeService {
 	
 	
 	/* 총자산 조회 */
-	public String getAccounts(HashMap<String, String> params) {
+	public JSONArray getAccounts(HashMap<String, String> params) throws ParseException {
 		
 		httpClientUtil = new HttpClientUtil("/v1/accounts");
 		
@@ -30,7 +32,7 @@ public class ExchangeService {
 	}
 
 	/* 주문 가능 조회 */
-	public String getChance(HashMap<String, String> params) {
+	public JSONArray getChance(HashMap<String, String> params) throws ParseException {
 	
 		try {
 			httpClientUtil = new HttpClientUtil("/v1/orders/chance?", params);
@@ -43,7 +45,7 @@ public class ExchangeService {
 	}
 
 	/* 개별 주문 조회 */
-	public String getOrderChk(HashMap<String, String> params) {
+	public JSONArray getOrderChk(HashMap<String, String> params) throws ParseException {
 		
 		try {
 			httpClientUtil = new HttpClientUtil("/v1/order?", params);
@@ -56,7 +58,7 @@ public class ExchangeService {
 	}
 
 	/* 주문 리스트 조회 */
-	public String getOrderlist(HashMap<String, String> params) {
+	public JSONArray getOrderlist(HashMap<String, String> params) throws ParseException {
 			
 			try {
 				httpClientUtil = new HttpClientUtil("/v1/orders?", params);
@@ -82,7 +84,7 @@ public class ExchangeService {
 	}
 
 	/* 주문하기 */
-	public String goOrder(HashMap<String, String> params) {
+	public JSONArray goOrder(HashMap<String, String> params) throws ParseException {
 		
 		try {
 			httpClientUtil = new HttpClientUtil("/v1/orders", params);
