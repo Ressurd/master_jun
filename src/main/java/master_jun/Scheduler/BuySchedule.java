@@ -63,7 +63,7 @@ public class BuySchedule {
 	
 	@Scheduled(fixedDelay = 1000)
 	public void OrderList() throws Exception {
-		HashMap<String, String> params = new HashMap<>();
+		HashMap<String, String> params = new HashMap<String, String>();
 		JSONObject jObject = new JSONObject();
 		Boolean chk = true;
 		params.put("state", "wait");
@@ -91,7 +91,7 @@ public class BuySchedule {
 					myMarketCoinMap.put("uuid", jObject.get("uuid"));
 					myMarketCoinMap.put("cnt", "180");
 				}
-			}	
+			}
 		}
 		
 	}

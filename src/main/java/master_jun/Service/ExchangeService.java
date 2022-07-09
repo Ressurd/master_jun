@@ -67,7 +67,7 @@ public class ExchangeService {
 				e.printStackTrace();
 			}
 			
-			return httpClientUtil.sendUpbitGet(); 
+			return httpClientUtil.sendUpbitGet();
 		}
 
 	/* 주문 취소 접수 */

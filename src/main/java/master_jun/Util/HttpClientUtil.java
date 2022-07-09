@@ -2,7 +2,6 @@ package master_jun.Util;
 
 
 import com.auth0.jwt.JWT;
-
 import com.auth0.jwt.algorithms.Algorithm;
 import com.google.gson.Gson;
 
@@ -35,11 +34,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class HttpClientUtil {
-	private final String accessKey = System.getenv("UPBIT_OPEN_API_ACCESS_KEY");
-	private final String secretKey = System.getenv("UPBIT_OPEN_API_SECRET_KEY");
+	private final String accessKey = "6bVK61mvTTfi2NuEUC1Jo3UQl4MGBoAtMNUxHIVn";
+	private final String secretKey = "eGUXh4mGh2xH5GRbJ2mQK1d97QisJ0wxD1Aenx0B";
 	private final String serverUrl = "https://api.upbit.com";
     private String jwtToken = "";
     private String reqMsg = "";
+    private String queryString = "";
     private String queryHash = null;
     private HashMap<String, String> params = null;
     
@@ -49,16 +49,14 @@ public class HttpClientUtil {
 	
 	public HttpClientUtil(String reqMsg) {
 		this.reqMsg = reqMsg;
-        this.jwtToken = getJwtToken();
 	}
 	
 	public HttpClientUtil(String reqMsg, HashMap<String, String> params) throws NoSuchAlgorithmException, UnsupportedEncodingException{
-        this.jwtToken = getJwtToken();
         this.params = params;
         
         ArrayList<String> queryElements = new ArrayList<String>();
         
-        if(params != null) {
+        if(!params.isEmpty()) {
         	for(Map.Entry<String, String> entity : params.entrySet()) {
                 queryElements.add(entity.getKey() + "=" + entity.getValue());
             }
@@ -68,7 +66,8 @@ public class HttpClientUtil {
         MessageDigest md = MessageDigest.getInstance("SHA-512");
         md.update(queryString.getBytes("UTF-8"));
         this.queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
-        this.reqMsg = reqMsg+queryString;
+		this.reqMsg = reqMsg;
+		this.queryString = queryString;
 	}
 	
 	public String getJwtToken() {
@@ -81,7 +80,6 @@ public class HttpClientUtil {
 	                .sign(algorithm);}
 		else {
 			return JWT.create()
-
 	                .withClaim("access_key", accessKey)
 	                .withClaim("nonce", UUID.randomUUID().toString())
 	                .withClaim("query_hash", queryHash)
@@ -109,15 +107,15 @@ public class HttpClientUtil {
 	 * */
 	public JSONArray sendUpbitGet() throws ParseException {
 		String result = "";
-
-        JSONArray jsonarray = new JSONArray();
+		jwtToken = getJwtToken();
+        JSONArray jsonarray = null;
         
 		try {
 			String authenticationToken = "Bearer " + jwtToken;
 
             HttpClient client = HttpClientBuilder.create().build();
 
-            HttpGet request = new HttpGet(serverUrl + reqMsg);
+            HttpGet request = new HttpGet(serverUrl + reqMsg + queryString);
 
             request.setHeader("Content-Type", "application/json");
 
@@ -153,7 +151,7 @@ public class HttpClientUtil {
 	 * */
 	public JSONArray sendUpbitPost() throws ParseException {
 		String result = "";
-		
+		jwtToken = getJwtToken();
         JSONArray jsonarray = new JSONArray();
 		try {
 			String authenticationToken = "Bearer " + jwtToken;
@@ -198,6 +196,7 @@ public class HttpClientUtil {
 	 * */
 	public String sendUpbitDelete() {
 		String result = "";
+		jwtToken = getJwtToken();
 		try {
 			String authenticationToken = "Bearer " + jwtToken;
 
