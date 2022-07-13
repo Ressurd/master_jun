@@ -2,6 +2,7 @@ package master_jun.Util;
 
 
 import com.auth0.jwt.JWT;
+
 import com.auth0.jwt.algorithms.Algorithm;
 import com.google.gson.Gson;
 
@@ -27,20 +28,15 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 import org.apache.http.util.EntityUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Component;
 
 @Component
 public class HttpClientUtil {
-	private final String accessKey = "6bVK61mvTTfi2NuEUC1Jo3UQl4MGBoAtMNUxHIVn";
-	private final String secretKey = "eGUXh4mGh2xH5GRbJ2mQK1d97QisJ0wxD1Aenx0B";
-	private final String serverUrl = "https://api.upbit.com";
+	private final String accessKey = System.getenv("UPBIT_OPEN_API_ACCESS_KEY");
+	private final String secretKey = System.getenv("UPBIT_OPEN_API_SECRET_KEY");
+	private final String serverUrl = System.getenv("UPBIT_OPEN_API_SERVER_URL");
     private String jwtToken = "";
     private String reqMsg = "";
-    private String queryString = "";
     private String queryHash = null;
     private HashMap<String, String> params = null;
     
@@ -50,25 +46,21 @@ public class HttpClientUtil {
 	
 	public HttpClientUtil(String reqMsg) {
 		this.reqMsg = reqMsg;
+        this.jwtToken = getJwtToken();
 	}
 	
-	public HttpClientUtil(String reqMsg, HashMap<String, String> params) throws NoSuchAlgorithmException, UnsupportedEncodingException{
+	public HttpClientUtil(String reqMsg, HashMap<String, String> params, ArrayList<String> queryElements) throws NoSuchAlgorithmException, UnsupportedEncodingException{
+        this.jwtToken = getJwtToken();
         this.params = params;
-        
-        ArrayList<String> queryElements = new ArrayList<String>();
-        
-        if(!params.isEmpty()) {
-        	for(Map.Entry<String, String> entity : params.entrySet()) {
-                queryElements.add(entity.getKey() + "=" + entity.getValue());
-            }
+        for(Map.Entry<String, String> entity : params.entrySet()) {
+            queryElements.add(entity.getKey() + "=" + entity.getValue());
         }
-        
+
         String queryString = String.join("&", queryElements.toArray(new String[0]));
         MessageDigest md = MessageDigest.getInstance("SHA-512");
         md.update(queryString.getBytes("UTF-8"));
         this.queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
-		this.reqMsg = reqMsg;
-		this.queryString = queryString;
+        this.reqMsg = reqMsg+queryString;
 	}
 	
 	public String getJwtToken() {
@@ -81,17 +73,13 @@ public class HttpClientUtil {
 	                .sign(algorithm);}
 		else {
 			return JWT.create()
+
 	                .withClaim("access_key", accessKey)
 	                .withClaim("nonce", UUID.randomUUID().toString())
 	                .withClaim("query_hash", queryHash)
 	                .withClaim("query_hash_alg", "SHA512")
 	                .sign(algorithm);
 		}
-	}
-	
-	public JSONArray JP(String parsingString) throws Exception {
-		JSONParser jp = new JSONParser();
-		return (JSONArray) jp.parse(parsingString);
 	}
 	
 	/*
@@ -111,17 +99,14 @@ public class HttpClientUtil {
 	 * 
 	 * 
 	 * */
-	public JSONArray sendUpbitGet() throws ParseException {
+	public String sendUpbitGet() {
 		String result = "";
-		jwtToken = getJwtToken();
-        JSONArray jsonarray = null;
-        
 		try {
 			String authenticationToken = "Bearer " + jwtToken;
 
             HttpClient client = HttpClientBuilder.create().build();
 
-            HttpGet request = new HttpGet(serverUrl + reqMsg + queryString);
+            HttpGet request = new HttpGet(serverUrl + reqMsg);
 
             request.setHeader("Content-Type", "application/json");
 
@@ -132,98 +117,52 @@ public class HttpClientUtil {
             HttpEntity entity = response.getEntity();
 
             result = EntityUtils.toString(entity, "UTF-8");
-           
-			/* Object objtemp = null; */
-			JSONParser jsonParser = new JSONParser();
-			// objtemp = jsonParser.parse(response.body());
-			jsonarray = (JSONArray) jsonParser.parse(result);
-
+            
+            System.out.println("sendUpbit result: "+result);
 
         } catch (IOException e) {
 
             e.printStackTrace();
 
         }
-		
-		return jsonarray;
-
-	}
-	
-	/**
-	 * 지갑 정보 가져오기
-	 */
-	
-	public JSONArray sendUpbitGetBalanceCoin() throws Exception{
-		JSONArray result = new JSONArray();
-		String authenticationToken = "Bearer " + getJwtToken();
-		try {
-			HttpClient client = HttpClientBuilder.create().build();
-			HttpGet request = new HttpGet(serverUrl + "/v1/accounts");
-			request.setHeader("Content-Type", "application/json");
-			request.addHeader("Authorization", authenticationToken);
-
-			HttpResponse response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-			String temp = EntityUtils.toString(entity, "UTF-8").toString();
-			JSONArray jsonArr = JP(temp);
-			System.out.println(temp);
-			// System.out.println(EntityUtils.toString(entity, "UTF-8"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return result;
-	}
-	
-	/**
-	 * 주문리스트 뽑기
-	 * @date 2022. 7. 14.
-	 * @author 레서드
-	 * @return
-	 * @throws Exception
-	 */
-	
-	public JSONArray sendUpbitGetOrderList() throws Exception{
-		JSONArray result = new JSONArray();
-		String authenticationToken = "Bearer " + getJwtToken();
-		try {
-			HttpClient client = HttpClientBuilder.create().build();
-			HttpGet request = new HttpGet(serverUrl + "/v1/orders?" + queryString);
-			request.setHeader("Content-Type", "application/json");
-			request.addHeader("Authorization", authenticationToken);
-
-			HttpResponse response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-			String temp = EntityUtils.toString(entity, "UTF-8").toString();
-			result = JP(temp);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		return result;
 	}
 	
 	
 	/* 
 	 * 
-	 * 지정가 주문하기 
+	 * 주문하기 
 	 * 
 	 * */
-	public JSONArray sendUpbitPostBuyCoin() throws Exception{
-		JSONArray result = new JSONArray();
-		String authenticationToken = "Bearer " + getJwtToken();
+	public String sendUpbitPost() {
+		String result = "";
 		try {
-			HttpClient client = HttpClientBuilder.create().build();
-			HttpPost request = new HttpPost(serverUrl + "/v1/orders");
-			request.setHeader("Content-Type", "application/json");
-			request.addHeader("Authorization", authenticationToken);
-			request.setEntity(new StringEntity(new Gson().toJson(params)));
+			String authenticationToken = "Bearer " + jwtToken;
 
-			HttpResponse response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-			System.out.println(EntityUtils.toString(entity, "UTF-8"));
-			result = JP(entity.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+            HttpClient client = HttpClientBuilder.create().build();
+
+            HttpPost request = new HttpPost(serverUrl + "/v1/orders");
+
+            request.setHeader("Content-Type", "application/json");
+
+            request.addHeader("Authorization", authenticationToken);
+
+            request.setEntity(new StringEntity(new Gson().toJson(params)));
+
+
+            HttpResponse response = client.execute(request);
+
+            HttpEntity entity = response.getEntity();
+
+            result = EntityUtils.toString(entity, "UTF-8");
+            
+            System.out.println("sendUpbit result: "+result);
+
+        } catch (IOException e) {
+
+            e.printStackTrace();
+
+        }
 		return result;
 	}
 	
@@ -232,49 +171,32 @@ public class HttpClientUtil {
 	 * 주문취소 
 	 * 
 	 * */
-	public JSONArray sendUpbitDelete() throws Exception {
-		JSONArray result = new JSONArray();
-		String authenticationToken = "Bearer " + getJwtToken();
+	public String sendUpbitDelete() {
+		String result = "";
 		try {
-			HttpClient client = HttpClientBuilder.create().build();
-			HttpDelete request = new HttpDelete(serverUrl + "/v1/order?" + queryString);
-			request.setHeader("Content-Type", "application/json");
-			request.addHeader("Authorization", authenticationToken);
+			String authenticationToken = "Bearer " + jwtToken;
 
-			HttpResponse response = client.execute(request);
-			HttpEntity entity = response.getEntity();
+            HttpClient client = HttpClientBuilder.create().build();
 
-			System.out.println(EntityUtils.toString(entity, "UTF-8"));
-			result = JP(entity.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+            HttpDelete request = new HttpDelete(serverUrl + reqMsg);
+
+            request.setHeader("Content-Type", "application/json");
+
+            request.addHeader("Authorization", authenticationToken);
+
+
+            HttpResponse response = client.execute(request);
+
+            HttpEntity entity = response.getEntity();
+            
+            System.out.println("sendUpbit result: "+result);
+
+        } catch (IOException e) {
+
+            e.printStackTrace();
+
+        }
 		return result;
 	}
-	
-	/**
-	 * 시장가 매도
-	 * @date 2022. 7. 13.
-	 * @author 레서드
-	 * @return
-	 * @throws Exception 
-	 */
-	public JSONArray sendUpbitSellCoin() throws Exception {
-		JSONArray result = new JSONArray();
-		String authenticationToken = "Bearer " + getJwtToken();
-		try {
-			HttpClient client = HttpClientBuilder.create().build();
-			HttpPost request = new HttpPost(serverUrl + "/v1/orders");
-			request.setHeader("Content-Type", "application/json");
-			request.addHeader("Authorization", authenticationToken);
-			request.setEntity(new StringEntity(new Gson().toJson(params)));
-			HttpResponse response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-			System.out.println(EntityUtils.toString(entity, "UTF-8"));
-			result = JP(entity.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return result;
-	}
+
 }
