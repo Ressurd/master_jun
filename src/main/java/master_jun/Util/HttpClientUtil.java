@@ -28,6 +28,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 
 import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.stereotype.Component;
@@ -88,6 +89,11 @@ public class HttpClientUtil {
 		}
 	}
 	
+	public JSONArray JP(String parsingString) throws Exception {
+		JSONParser jp = new JSONParser();
+		return (JSONArray) jp.parse(parsingString);
+	}
+	
 	/*
 	 * reqMsg
 	 * 총자산 get /v1/accounts
@@ -143,50 +149,82 @@ public class HttpClientUtil {
 
 	}
 	
+	/**
+	 * 지갑 정보 가져오기
+	 */
+	
+	public JSONArray sendUpbitGetBalanceCoin() throws Exception{
+		JSONArray result = new JSONArray();
+		String authenticationToken = "Bearer " + getJwtToken();
+		try {
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpGet request = new HttpGet(serverUrl + "/v1/accounts");
+			request.setHeader("Content-Type", "application/json");
+			request.addHeader("Authorization", authenticationToken);
+
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+			String temp = EntityUtils.toString(entity, "UTF-8").toString();
+			JSONArray jsonArr = JP(temp);
+			System.out.println(temp);
+			// System.out.println(EntityUtils.toString(entity, "UTF-8"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	/**
+	 * 주문리스트 뽑기
+	 * @date 2022. 7. 14.
+	 * @author 레서드
+	 * @return
+	 * @throws Exception
+	 */
+	
+	public JSONArray sendUpbitGetOrderList() throws Exception{
+		JSONArray result = new JSONArray();
+		String authenticationToken = "Bearer " + getJwtToken();
+		try {
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpGet request = new HttpGet(serverUrl + "/v1/orders?" + queryString);
+			request.setHeader("Content-Type", "application/json");
+			request.addHeader("Authorization", authenticationToken);
+
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+			String temp = EntityUtils.toString(entity, "UTF-8").toString();
+			result = JP(temp);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
 	
 	/* 
 	 * 
-	 * 주문하기 
+	 * 지정가 주문하기 
 	 * 
 	 * */
-	public JSONArray sendUpbitPost() throws ParseException {
-		String result = "";
-		jwtToken = getJwtToken();
-        JSONArray jsonarray = new JSONArray();
+	public JSONArray sendUpbitPostBuyCoin() throws Exception{
+		JSONArray result = new JSONArray();
+		String authenticationToken = "Bearer " + getJwtToken();
 		try {
-			String authenticationToken = "Bearer " + jwtToken;
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpPost request = new HttpPost(serverUrl + "/v1/orders");
+			request.setHeader("Content-Type", "application/json");
+			request.addHeader("Authorization", authenticationToken);
+			request.setEntity(new StringEntity(new Gson().toJson(params)));
 
-            HttpClient client = HttpClientBuilder.create().build();
-
-            HttpPost request = new HttpPost(serverUrl + "/v1/orders");
-
-            request.setHeader("Content-Type", "application/json");
-
-            request.addHeader("Authorization", authenticationToken);
-
-            request.setEntity(new StringEntity(new Gson().toJson(params)));
-
-
-            HttpResponse response = client.execute(request);
-
-            HttpEntity entity = response.getEntity();
-
-            result = EntityUtils.toString(entity, "UTF-8");
-            
-            
- 			/* Object objtemp = null; */
- 			JSONParser jsonParser = new JSONParser();
- 			// objtemp = jsonParser.parse(response.body());
- 			jsonarray = (JSONArray) jsonParser.parse(result);
-
-
-         } catch (IOException e) {
-
-             e.printStackTrace();
-
-         }
- 		
- 		return jsonarray;
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+			System.out.println(EntityUtils.toString(entity, "UTF-8"));
+			result = JP(entity.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return result;
 	}
 	
 	/* 
@@ -194,33 +232,49 @@ public class HttpClientUtil {
 	 * 주문취소 
 	 * 
 	 * */
-	public String sendUpbitDelete() {
-		String result = "";
-		jwtToken = getJwtToken();
+	public JSONArray sendUpbitDelete() throws Exception {
+		JSONArray result = new JSONArray();
+		String authenticationToken = "Bearer " + getJwtToken();
 		try {
-			String authenticationToken = "Bearer " + jwtToken;
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpDelete request = new HttpDelete(serverUrl + "/v1/order?" + queryString);
+			request.setHeader("Content-Type", "application/json");
+			request.addHeader("Authorization", authenticationToken);
 
-            HttpClient client = HttpClientBuilder.create().build();
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
 
-            HttpDelete request = new HttpDelete(serverUrl + reqMsg);
-
-            request.setHeader("Content-Type", "application/json");
-
-            request.addHeader("Authorization", authenticationToken);
-
-
-            HttpResponse response = client.execute(request);
-
-            HttpEntity entity = response.getEntity();
-            
-            System.out.println("sendUpbit result: "+result);
-
-        } catch (IOException e) {
-
-            e.printStackTrace();
-
-        }
+			System.out.println(EntityUtils.toString(entity, "UTF-8"));
+			result = JP(entity.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		return result;
 	}
-
+	
+	/**
+	 * 시장가 매도
+	 * @date 2022. 7. 13.
+	 * @author 레서드
+	 * @return
+	 * @throws Exception 
+	 */
+	public JSONArray sendUpbitSellCoin() throws Exception {
+		JSONArray result = new JSONArray();
+		String authenticationToken = "Bearer " + getJwtToken();
+		try {
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpPost request = new HttpPost(serverUrl + "/v1/orders");
+			request.setHeader("Content-Type", "application/json");
+			request.addHeader("Authorization", authenticationToken);
+			request.setEntity(new StringEntity(new Gson().toJson(params)));
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+			System.out.println(EntityUtils.toString(entity, "UTF-8"));
+			result = JP(entity.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
 }
