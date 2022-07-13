@@ -32,11 +32,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class HttpClientUtil {
-	private final String accessKey = System.getenv("UPBIT_OPEN_API_ACCESS_KEY");
-	private final String secretKey = System.getenv("UPBIT_OPEN_API_SECRET_KEY");
-	private final String serverUrl = System.getenv("UPBIT_OPEN_API_SERVER_URL");
+	private final String accessKey = "";
+	private final String secretKey = "";
+	private final String serverUrl = "https://api.upbit.com";
     private String jwtToken = "";
     private String reqMsg = "";
+    private String queryString = "";
     private String queryHash = null;
     private HashMap<String, String> params = null;
     
@@ -49,18 +50,23 @@ public class HttpClientUtil {
         this.jwtToken = getJwtToken();
 	}
 	
-	public HttpClientUtil(String reqMsg, HashMap<String, String> params, ArrayList<String> queryElements) throws NoSuchAlgorithmException, UnsupportedEncodingException{
-        this.jwtToken = getJwtToken();
+	public HttpClientUtil(String reqMsg, HashMap<String, String> params) throws NoSuchAlgorithmException, UnsupportedEncodingException{
         this.params = params;
-        for(Map.Entry<String, String> entity : params.entrySet()) {
-            queryElements.add(entity.getKey() + "=" + entity.getValue());
+        
+        ArrayList<String> queryElements = new ArrayList<String>();
+        
+        if(!params.isEmpty()) {
+        	for(Map.Entry<String, String> entity : params.entrySet()) {
+                queryElements.add(entity.getKey() + "=" + entity.getValue());
+            }
         }
-
+        
         String queryString = String.join("&", queryElements.toArray(new String[0]));
         MessageDigest md = MessageDigest.getInstance("SHA-512");
         md.update(queryString.getBytes("UTF-8"));
         this.queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
-        this.reqMsg = reqMsg+queryString;
+		this.reqMsg = reqMsg;
+		this.queryString = queryString;
 	}
 	
 	public String getJwtToken() {
