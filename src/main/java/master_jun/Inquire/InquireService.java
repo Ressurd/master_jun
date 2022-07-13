@@ -33,7 +33,6 @@ import com.google.gson.Gson;
 
 import master_jun.Service.ChartService;
 import master_jun.Service.ExchangeService;
-import master_jun.Util.HttpClientUtil;
 import master_jun.Util.OkHttpClientUtil;
 
 /**
@@ -148,7 +147,7 @@ public class InquireService {
 	}
 
 	/**
-	 * 지갑 반환
+	 * 가지고있는 코인 중 원하는코인명 밸런스(코인갯수) 반환
 	 * 
 	 * @date 2022. 7. 5.
 	 * @author 레서드
@@ -156,9 +155,48 @@ public class InquireService {
 	 * @return
 	 * @throws Exception
 	 */
-	public void getBalanceCoin() throws Exception {
-		HttpClientUtil hcu = new HttpClientUtil();
-		hcu.sendUpbitGetBalanceCoin();
+	public String getBalanceCoin(String CoinNM) throws Exception {
+		String accessKey = getAccessKey();
+		String secretKey = getSecretKey();
+		String serverUrl = "https://api.upbit.com";
+		String returnBalance = "";
+		String Coin = "";
+		Coin = CoinNM.replace("KRW-", "");
+
+		Algorithm algorithm = Algorithm.HMAC256(secretKey);
+		String jwtToken = JWT.create().withClaim("access_key", accessKey)
+				.withClaim("nonce", UUID.randomUUID().toString()).sign(algorithm);
+
+		String authenticationToken = "Bearer " + jwtToken;
+
+		try {
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpGet request = new HttpGet(serverUrl + "/v1/accounts");
+			request.setHeader("Content-Type", "application/json");
+			request.addHeader("Authorization", authenticationToken);
+
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+			String temp = EntityUtils.toString(entity, "UTF-8").toString();
+			JSONArray jsonArr = JP(temp);
+
+			for (int i = 0; i < jsonArr.size(); i++) {
+				JSONObject jsonObj = (JSONObject) jsonArr.get(i);
+				// System.out.println(jsonObj.get("currency").equals(CoinNM));
+				if (jsonObj.get("currency").equals(Coin)) {
+					// System.out.println("coinName : "+jsonObj.get("currency")+", balance :
+					// "+jsonObj.get("balance"));
+					returnBalance = jsonObj.get("balance").toString();
+				}
+
+			}
+			System.out.println(temp);
+			// System.out.println(EntityUtils.toString(entity, "UTF-8"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return returnBalance;
 	}
 
 	/**
@@ -170,11 +208,64 @@ public class InquireService {
 	 * @return
 	 * @throws Exception
 	 */
-	public void getOrderList(String CoinNM) throws Exception {
+	public List<Map<String, Object>> getOrderList(String CoinNM) throws Exception {
+		String accessKey = getAccessKey();
+		String secretKey = getSecretKey();
+		String serverUrl = "https://api.upbit.com";
+		List<Map<String, Object>> returnUuid = new ArrayList<Map<String, Object>>();
+		
 		HashMap<String, String> params = new HashMap<>();
 		params.put("state", "wait");
-		HttpClientUtil hcu = new HttpClientUtil(CoinNM, params);
-		hcu.sendUpbitGetOrderList();
+
+		ArrayList<String> queryElements = new ArrayList<>();
+		for (Map.Entry<String, String> entity : params.entrySet()) {
+			queryElements.add(entity.getKey() + "=" + entity.getValue());
+		}
+
+		String queryString = String.join("&", queryElements.toArray(new String[0]));
+		System.out.println("queryString : " + queryString);
+		MessageDigest md = MessageDigest.getInstance("SHA-512");
+		md.update(queryString.getBytes("UTF-8"));
+
+		String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
+
+		Algorithm algorithm = Algorithm.HMAC256(secretKey);
+		String jwtToken = JWT.create().withClaim("access_key", accessKey)
+				.withClaim("nonce", UUID.randomUUID().toString()).withClaim("query_hash", queryHash)
+				.withClaim("query_hash_alg", "SHA512").sign(algorithm);
+
+		String authenticationToken = "Bearer " + jwtToken;
+
+		try {
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpGet request = new HttpGet(serverUrl + "/v1/orders?" + queryString);
+			request.setHeader("Content-Type", "application/json");
+			request.addHeader("Authorization", authenticationToken);
+
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+			String temp = EntityUtils.toString(entity, "UTF-8").toString();
+			JSONArray jsonArr = JP(temp);
+			for (int i = 0; i < jsonArr.size(); i++) {
+				JSONObject jsonObj = (JSONObject) jsonArr.get(i);
+				System.out.println(jsonObj.get("market"));
+				if (jsonObj.get("market").equals(CoinNM)) {
+					if(myMarketCoin.size() == 0) {
+						myMarketCoin.add(setValue(CoinNM, jsonObj.get("uuid").toString(), 5));
+					}
+					else {
+						for (int j = 0; j < myMarketCoin.size(); j++) {
+							if (!myMarketCoin.get(j).get("uuid").equals(jsonObj.get("uuid").toString())){
+								myMarketCoin.add(setValue(CoinNM, jsonObj.get("uuid").toString(), 300));
+							}
+						}
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return returnUuid;
 	}
 
 	/**
@@ -187,10 +278,45 @@ public class InquireService {
 	 * @throws Exception
 	 */
 	public void cancelCoin(String CoinNM, String uuidValue) throws Exception {
+		String accessKey = getAccessKey();
+		String secretKey = getSecretKey();
+		String serverUrl = "https://api.upbit.com";
+
 		HashMap<String, String> params = new HashMap<>();
 		params.put("uuid", uuidValue);
-		HttpClientUtil hcu = new HttpClientUtil(CoinNM, params);
-		hcu.sendUpbitDelete();
+
+		ArrayList<String> queryElements = new ArrayList<>();
+		for (Map.Entry<String, String> entity : params.entrySet()) {
+			queryElements.add(entity.getKey() + "=" + entity.getValue());
+		}
+
+		String queryString = String.join("&", queryElements.toArray(new String[0]));
+
+		MessageDigest md = MessageDigest.getInstance("SHA-512");
+		md.update(queryString.getBytes("UTF-8"));
+
+		String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
+
+		Algorithm algorithm = Algorithm.HMAC256(secretKey);
+		String jwtToken = JWT.create().withClaim("access_key", accessKey)
+				.withClaim("nonce", UUID.randomUUID().toString()).withClaim("query_hash", queryHash)
+				.withClaim("query_hash_alg", "SHA512").sign(algorithm);
+
+		String authenticationToken = "Bearer " + jwtToken;
+
+		try {
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpDelete request = new HttpDelete(serverUrl + "/v1/order?" + queryString);
+			request.setHeader("Content-Type", "application/json");
+			request.addHeader("Authorization", authenticationToken);
+
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+
+			System.out.println(EntityUtils.toString(entity, "UTF-8"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -203,16 +329,53 @@ public class InquireService {
 	 * @throws Exception
 	 */
 	public void buyCoin(String CoinNM, String volume) throws Exception {
+		String accessKey = getAccessKey();
+		String secretKey = getSecretKey();
+		String serverUrl = "https://api.upbit.com";
 		BigDecimal reall = RoundingMoneyBuyAmount(new BigDecimal(volume));
-		String newVolume = reall.toPlainString();
+		String tempVolume = reall.toPlainString();
+
 		HashMap<String, String> params = new HashMap<>();
 		params.put("market", CoinNM);
 		params.put("side", "bid");
-		params.put("volume", newVolume);
+		params.put("volume", tempVolume);
 		params.put("price", "5000");
 		params.put("ord_type", "limit");
-		HttpClientUtil hcu = new HttpClientUtil(CoinNM, params);
-		hcu.sendUpbitPostBuyCoin();
+
+		ArrayList<String> queryElements = new ArrayList<>();
+		for (Map.Entry<String, String> entity : params.entrySet()) {
+			queryElements.add(entity.getKey() + "=" + entity.getValue());
+		}
+
+		String queryString = String.join("&", queryElements.toArray(new String[0]));
+
+		MessageDigest md = MessageDigest.getInstance("SHA-512");
+		md.update(queryString.getBytes("UTF-8"));
+
+		String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
+
+		Algorithm algorithm = Algorithm.HMAC256(secretKey);
+		String jwtToken = JWT.create().withClaim("access_key", accessKey)
+				.withClaim("nonce", UUID.randomUUID().toString()).withClaim("query_hash", queryHash)
+				.withClaim("query_hash_alg", "SHA512").sign(algorithm);
+
+		String authenticationToken = "Bearer " + jwtToken;
+
+		try {
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpPost request = new HttpPost(serverUrl + "/v1/orders");
+			request.setHeader("Content-Type", "application/json");
+			request.addHeader("Authorization", authenticationToken);
+			request.setEntity(new StringEntity(new Gson().toJson(params)));
+
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+			getOrderList(CoinNM);
+			System.out.println(EntityUtils.toString(entity, "UTF-8"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	/**
@@ -224,11 +387,50 @@ public class InquireService {
 	 * @throws Exception
 	 */
 	public void sellCoin(String CoinNM) throws Exception {
+		String accessKey = getAccessKey();
+		String secretKey = getSecretKey();
+		String serverUrl = "https://api.upbit.com";
+
 		HashMap<String, String> params = new HashMap<>();
 		params.put("market", CoinNM);
 		params.put("side", "ask");
 		params.put("ord_type", "market");
-		HttpClientUtil hcu = new HttpClientUtil(CoinNM, params);
-		hcu.sendUpbitSellCoin();
+
+		ArrayList<String> queryElements = new ArrayList<>();
+		for (Map.Entry<String, String> entity : params.entrySet()) {
+			queryElements.add(entity.getKey() + "=" + entity.getValue());
+		}
+
+		String queryString = String.join("&", queryElements.toArray(new String[0]));
+
+		MessageDigest md = MessageDigest.getInstance("SHA-512");
+		md.update(queryString.getBytes("UTF-8"));
+
+		String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
+
+		Algorithm algorithm = Algorithm.HMAC256(secretKey);
+		String jwtToken = JWT.create().withClaim("access_key", accessKey)
+				.withClaim("nonce", UUID.randomUUID().toString()).withClaim("query_hash", queryHash)
+				.withClaim("query_hash_alg", "SHA512").sign(algorithm);
+
+		String authenticationToken = "Bearer " + jwtToken;
+
+		try {
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpPost request = new HttpPost(serverUrl + "/v1/orders");
+			request.setHeader("Content-Type", "application/json");
+			request.addHeader("Authorization", authenticationToken);
+			request.setEntity(new StringEntity(new Gson().toJson(params)));
+
+			HttpResponse response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+
+			System.out.println(EntityUtils.toString(entity, "UTF-8"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
+	
+
 }
