@@ -5,8 +5,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.security.MessageDigest;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -44,7 +47,7 @@ import master_jun.Util.OkHttpClientUtil;
  */
 @Service
 public class InquireService {
-
+	
 	@Autowired
 	public OkHttpClientUtil ohcu;
 
@@ -53,58 +56,24 @@ public class InquireService {
 
 	@Autowired
 	public ExchangeService es;
-
-	public String getAccessKey() {
-		return "";
-	}
-
-	public String getSecretKey() {
-		return "";
-	}
-
-	static List<Map<String, Object>> myMarketCoin = new ArrayList<Map<String, Object>>();
-
-	public Map<String, Object> setValue(String CoinName, String uuid, int cnt) throws Exception {
-		Map<String, Object> marketCoinValidation = new HashMap<>();
-		marketCoinValidation.put("coin", CoinName);
-		marketCoinValidation.put("uuid", uuid);
-		marketCoinValidation.put("cnt", cnt);
-		return marketCoinValidation;
-	}
-
-	@SuppressWarnings("unchecked")
-	//@Scheduled(fixedDelay = 5500)
-	public void GETCOIN() throws Exception {
-		myMarketCoin.add(setValue("BTC", "etest", 300));
-	}
-
-	/**
-	 * 나도 스케쥴 한번만..
-	 * 
-	 * @date 2022. 7. 5.
-	 * @author 레서드
-	 * @throws Exception
-	 */
-	@Scheduled(fixedDelay = 1000)
-	public void ScheduleTest() throws Exception {
-		// System.out.println("내가가진 BTC 갯수는? : " + getBalanceCoin("KRW-BTC"));
-		// System.out.println(getOrderList("KRW-BTC"));
-		//getOrderList("KRW-BTC");
-		if(myMarketCoin.size() != 0) {
-			for(int i = 0 ; i < myMarketCoin.size(); i++) { 
-				int cnt = (int)myMarketCoin.get(i).get("cnt")-1; 
-				myMarketCoin.get(i).put("cnt", cnt);
-				if(cnt < 0) { 
-					System.out.println("작아졌어!"); 
-					cancelCoin(myMarketCoin.get(i).get("coin").toString(), myMarketCoin.get(i).get("uuid").toString());
-					myMarketCoin.remove(i); 
-				}
+	
+	@Scheduled(fixedDelay = 5000)
+	public void getcoin() throws Exception {
+		HashMap<String, String> params = new HashMap<>();
+		params.put("state", "wait");
+		JSONArray jsonarray = es.getOrderlist(params);
+		for (int i= 0 ; i < jsonarray.size(); i++) {
+			JSONObject jsonobj = (JSONObject) jsonarray.get(i);
+			String tempTime = jsonobj.get("created_at").toString();
+			SimpleDateFormat input = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+			Date coinTime = input.parse(tempTime);
+			Date nowTime = new Date();
+			if(((nowTime.getTime() - coinTime.getTime())/1000) > 300) {
+				cancelCoin(jsonobj.get("uuid").toString());
 			}
 		}
-
-		System.out.println(myMarketCoin.toString());
 	}
-
+	
 	public static BigDecimal RoundingMoneyBuyAmount(BigDecimal reMoney) {
 		if (reMoney.compareTo(new BigDecimal(2000000)) != -1)
 			reMoney = reMoney.divide(new BigDecimal(1000)).multiply(new BigDecimal(1000));
@@ -130,305 +99,103 @@ public class InquireService {
 			reMoney = reMoney.setScale(4, RoundingMode.DOWN);
 		return reMoney;
 	}
-
-
-	/**
-	 * 유용할지 모르겠는데 JSONArray 파서임 ㅎㅎ;; ㅈㅅ.. ㅋㅋ!! 나편할려고 만듬
-	 * 
-	 * @date 2022. 7. 5.
-	 * @author 레서드
-	 * @param parsingString
-	 * @return JSONArray
-	 * @throws Exception
-	 */
-	public JSONArray JP(String parsingString) throws Exception {
-		JSONParser jp = new JSONParser();
-		return (JSONArray) jp.parse(parsingString);
-	}
-
-	/**
-	 * 가지고있는 코인 중 원하는코인명 밸런스(코인갯수) 반환
-	 * 
-	 * @date 2022. 7. 5.
-	 * @author 레서드
-	 * @param CoinNM 코인명
-	 * @return
-	 * @throws Exception
-	 */
-	public String getBalanceCoin(String CoinNM) throws Exception {
-		String accessKey = getAccessKey();
-		String secretKey = getSecretKey();
-		String serverUrl = "https://api.upbit.com";
-		String returnBalance = "";
-		String Coin = "";
-		Coin = CoinNM.replace("KRW-", "");
-
-		Algorithm algorithm = Algorithm.HMAC256(secretKey);
-		String jwtToken = JWT.create().withClaim("access_key", accessKey)
-				.withClaim("nonce", UUID.randomUUID().toString()).sign(algorithm);
-
-		String authenticationToken = "Bearer " + jwtToken;
-
-		try {
-			HttpClient client = HttpClientBuilder.create().build();
-			HttpGet request = new HttpGet(serverUrl + "/v1/accounts");
-			request.setHeader("Content-Type", "application/json");
-			request.addHeader("Authorization", authenticationToken);
-
-			HttpResponse response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-			String temp = EntityUtils.toString(entity, "UTF-8").toString();
-			JSONArray jsonArr = JP(temp);
-
-			for (int i = 0; i < jsonArr.size(); i++) {
-				JSONObject jsonObj = (JSONObject) jsonArr.get(i);
-				// System.out.println(jsonObj.get("currency").equals(CoinNM));
-				if (jsonObj.get("currency").equals(Coin)) {
-					// System.out.println("coinName : "+jsonObj.get("currency")+", balance :
-					// "+jsonObj.get("balance"));
-					returnBalance = jsonObj.get("balance").toString();
-				}
-
+	
+	public String getKRW() throws Exception{
+		JSONArray jsonarray = es.getAccounts(null);
+		String tempCoinNM = "KRW";
+		String volume = "";
+		for (int i= 0 ; i < jsonarray.size(); i++) {
+			JSONObject jsonobj = (JSONObject) jsonarray.get(i);
+			if (jsonobj.get("currency").equals(tempCoinNM)) {
+				volume = jsonobj.get("balance").toString();
 			}
-			System.out.println(temp);
-			// System.out.println(EntityUtils.toString(entity, "UTF-8"));
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
-
-		return returnBalance;
+		return volume;
 	}
 
 	/**
-	 * 주문한거 리스트 뽑는건데 지금은 uuid만 쓸꺼임 + cnt까지
-	 * 
-	 * @date 2022. 7. 5.
+	 * 총 자산 조회
+	 * @date 2022. 7. 14.
 	 * @author 레서드
-	 * @param CoinNM "KRW-BTC" ...
-	 * @return
 	 * @throws Exception
 	 */
-	public List<Map<String, Object>> getOrderList(String CoinNM) throws Exception {
-		String accessKey = getAccessKey();
-		String secretKey = getSecretKey();
-		String serverUrl = "https://api.upbit.com";
-		List<Map<String, Object>> returnUuid = new ArrayList<Map<String, Object>>();
-		
+	public void getBalanceCoin() throws Exception {
+		System.out.println(es.getAccounts(null));
+	}
+
+	/**
+	 * 주문 리스트 조회
+	 * @date 2022. 7. 14.
+	 * @author 레서드
+	 * @throws Exception
+	 */
+	public void getOrderList() throws Exception {
 		HashMap<String, String> params = new HashMap<>();
 		params.put("state", "wait");
-
-		ArrayList<String> queryElements = new ArrayList<>();
-		for (Map.Entry<String, String> entity : params.entrySet()) {
-			queryElements.add(entity.getKey() + "=" + entity.getValue());
-		}
-
-		String queryString = String.join("&", queryElements.toArray(new String[0]));
-		System.out.println("queryString : " + queryString);
-		MessageDigest md = MessageDigest.getInstance("SHA-512");
-		md.update(queryString.getBytes("UTF-8"));
-
-		String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
-
-		Algorithm algorithm = Algorithm.HMAC256(secretKey);
-		String jwtToken = JWT.create().withClaim("access_key", accessKey)
-				.withClaim("nonce", UUID.randomUUID().toString()).withClaim("query_hash", queryHash)
-				.withClaim("query_hash_alg", "SHA512").sign(algorithm);
-
-		String authenticationToken = "Bearer " + jwtToken;
-
-		try {
-			HttpClient client = HttpClientBuilder.create().build();
-			HttpGet request = new HttpGet(serverUrl + "/v1/orders?" + queryString);
-			request.setHeader("Content-Type", "application/json");
-			request.addHeader("Authorization", authenticationToken);
-
-			HttpResponse response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-			String temp = EntityUtils.toString(entity, "UTF-8").toString();
-			JSONArray jsonArr = JP(temp);
-			for (int i = 0; i < jsonArr.size(); i++) {
-				JSONObject jsonObj = (JSONObject) jsonArr.get(i);
-				System.out.println(jsonObj.get("market"));
-				if (jsonObj.get("market").equals(CoinNM)) {
-					if(myMarketCoin.size() == 0) {
-						myMarketCoin.add(setValue(CoinNM, jsonObj.get("uuid").toString(), 5));
-					}
-					else {
-						for (int j = 0; j < myMarketCoin.size(); j++) {
-							if (!myMarketCoin.get(j).get("uuid").equals(jsonObj.get("uuid").toString())){
-								myMarketCoin.add(setValue(CoinNM, jsonObj.get("uuid").toString(), 300));
-							}
-						}
-					}
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return returnUuid;
+		System.out.println(es.getOrderlist(params));
 	}
 
 	/**
-	 * 코인 캔슬하기
-	 * 
-	 * @date 2022. 7. 5.
+	 * 주문 취소 접수
+	 * @date 2022. 7. 14.
 	 * @author 레서드
-	 * @param CoinNM    취소할 코인명명
-	 * @param uuidValue 반드시 getOrderList 를 거쳐서 list에서 값뽑아서 uuid값 사용하자
+	 * @param uuidValue - uuid값 필요
 	 * @throws Exception
 	 */
-	public void cancelCoin(String CoinNM, String uuidValue) throws Exception {
-		String accessKey = getAccessKey();
-		String secretKey = getSecretKey();
-		String serverUrl = "https://api.upbit.com";
-
+	public void cancelCoin(String uuidValue) throws Exception {
 		HashMap<String, String> params = new HashMap<>();
 		params.put("uuid", uuidValue);
-
-		ArrayList<String> queryElements = new ArrayList<>();
-		for (Map.Entry<String, String> entity : params.entrySet()) {
-			queryElements.add(entity.getKey() + "=" + entity.getValue());
-		}
-
-		String queryString = String.join("&", queryElements.toArray(new String[0]));
-
-		MessageDigest md = MessageDigest.getInstance("SHA-512");
-		md.update(queryString.getBytes("UTF-8"));
-
-		String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
-
-		Algorithm algorithm = Algorithm.HMAC256(secretKey);
-		String jwtToken = JWT.create().withClaim("access_key", accessKey)
-				.withClaim("nonce", UUID.randomUUID().toString()).withClaim("query_hash", queryHash)
-				.withClaim("query_hash_alg", "SHA512").sign(algorithm);
-
-		String authenticationToken = "Bearer " + jwtToken;
-
-		try {
-			HttpClient client = HttpClientBuilder.create().build();
-			HttpDelete request = new HttpDelete(serverUrl + "/v1/order?" + queryString);
-			request.setHeader("Content-Type", "application/json");
-			request.addHeader("Authorization", authenticationToken);
-
-			HttpResponse response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-
-			System.out.println(EntityUtils.toString(entity, "UTF-8"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		System.out.println(es.getOrderDel(params));
 	}
 
 	/**
 	 * 지정가 매수
-	 * 
-	 * @date 2022. 7. 5.
+	 * @date 2022. 7. 14.
 	 * @author 레서드
-	 * @param CoinNM 코인명
-	 * @param volume 매수 지정가
+	 * @param CoinNM - 코인명
+	 * @param volume - 지정가격
+	 * @param price - 매수할금액
 	 * @throws Exception
 	 */
 	public void buyCoin(String CoinNM, String volume) throws Exception {
-		String accessKey = getAccessKey();
-		String secretKey = getSecretKey();
-		String serverUrl = "https://api.upbit.com";
 		BigDecimal reall = RoundingMoneyBuyAmount(new BigDecimal(volume));
-		String tempVolume = reall.toPlainString();
-
+		BigDecimal testVal = new BigDecimal(getKRW());
+		double a = reall.doubleValue();
+		double b = testVal.doubleValue();
+		b = b/20;
 		HashMap<String, String> params = new HashMap<>();
 		params.put("market", CoinNM);
 		params.put("side", "bid");
-		params.put("volume", tempVolume);
-		params.put("price", "5000");
+		params.put("volume", String.valueOf(Math.round(b/a)));
+		params.put("price", volume);
 		params.put("ord_type", "limit");
-
-		ArrayList<String> queryElements = new ArrayList<>();
-		for (Map.Entry<String, String> entity : params.entrySet()) {
-			queryElements.add(entity.getKey() + "=" + entity.getValue());
-		}
-
-		String queryString = String.join("&", queryElements.toArray(new String[0]));
-
-		MessageDigest md = MessageDigest.getInstance("SHA-512");
-		md.update(queryString.getBytes("UTF-8"));
-
-		String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
-
-		Algorithm algorithm = Algorithm.HMAC256(secretKey);
-		String jwtToken = JWT.create().withClaim("access_key", accessKey)
-				.withClaim("nonce", UUID.randomUUID().toString()).withClaim("query_hash", queryHash)
-				.withClaim("query_hash_alg", "SHA512").sign(algorithm);
-
-		String authenticationToken = "Bearer " + jwtToken;
-
-		try {
-			HttpClient client = HttpClientBuilder.create().build();
-			HttpPost request = new HttpPost(serverUrl + "/v1/orders");
-			request.setHeader("Content-Type", "application/json");
-			request.addHeader("Authorization", authenticationToken);
-			request.setEntity(new StringEntity(new Gson().toJson(params)));
-
-			HttpResponse response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-			getOrderList(CoinNM);
-			System.out.println(EntityUtils.toString(entity, "UTF-8"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
+		System.out.println(es.goOrder(params));
 	}
 
 	/**
-	 * 시장가 매도
-	 * 
-	 * @date 2022. 7. 5.
+	 * 지정가 매도
+	 * @date 2022. 7. 14.
 	 * @author 레서드
-	 * @param CoinNM 코인명
+	 * @param CoinNM - 코인명
 	 * @throws Exception
 	 */
 	public void sellCoin(String CoinNM) throws Exception {
-		String accessKey = getAccessKey();
-		String secretKey = getSecretKey();
-		String serverUrl = "https://api.upbit.com";
-
+		JSONArray jsonarray = es.getAccounts(null);
+		String tempCoinNM = CoinNM.replace("KRW-", "");
+		String volume = "";
+		for (int i= 0 ; i < jsonarray.size(); i++) {
+			JSONObject jsonobj = (JSONObject) jsonarray.get(i);
+			if (jsonobj.get("currency").equals(tempCoinNM)) {
+				volume = jsonobj.get("balance").toString();
+			}
+		}
+		
 		HashMap<String, String> params = new HashMap<>();
 		params.put("market", CoinNM);
 		params.put("side", "ask");
+		params.put("volume", volume);
 		params.put("ord_type", "market");
-
-		ArrayList<String> queryElements = new ArrayList<>();
-		for (Map.Entry<String, String> entity : params.entrySet()) {
-			queryElements.add(entity.getKey() + "=" + entity.getValue());
-		}
-
-		String queryString = String.join("&", queryElements.toArray(new String[0]));
-
-		MessageDigest md = MessageDigest.getInstance("SHA-512");
-		md.update(queryString.getBytes("UTF-8"));
-
-		String queryHash = String.format("%0128x", new BigInteger(1, md.digest()));
-
-		Algorithm algorithm = Algorithm.HMAC256(secretKey);
-		String jwtToken = JWT.create().withClaim("access_key", accessKey)
-				.withClaim("nonce", UUID.randomUUID().toString()).withClaim("query_hash", queryHash)
-				.withClaim("query_hash_alg", "SHA512").sign(algorithm);
-
-		String authenticationToken = "Bearer " + jwtToken;
-
-		try {
-			HttpClient client = HttpClientBuilder.create().build();
-			HttpPost request = new HttpPost(serverUrl + "/v1/orders");
-			request.setHeader("Content-Type", "application/json");
-			request.addHeader("Authorization", authenticationToken);
-			request.setEntity(new StringEntity(new Gson().toJson(params)));
-
-			HttpResponse response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-
-			System.out.println(EntityUtils.toString(entity, "UTF-8"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		System.out.println(es.goOrder(params));
 
 	}
 	

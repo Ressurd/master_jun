@@ -34,10 +34,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class HttpClientUtil {
-	private final String accessKey = "6bVK61mvTTfi2NuEUC1Jo3UQl4MGBoAtMNUxHIVn";
-	private final String secretKey = "eGUXh4mGh2xH5GRbJ2mQK1d97QisJ0wxD1Aenx0B";
+	private final String accessKey = "piHTnixSeMYYNSFe3NoPlVMn7t4tqfDCshwFftfL";
+	private final String secretKey = "z30qq0YSAKzqCFTEcey34LqMeC8wFp2ZAxRc3FGr";
 	private final String serverUrl = "https://api.upbit.com";
     private String jwtToken = "";
+    private String jwtToken2 = "";
     private String reqMsg = "";
     private String queryString = "";
     private String queryHash = null;
@@ -98,6 +99,11 @@ public class HttpClientUtil {
 	 * 
 	 * */
 	
+	public JSONArray JP(String parsingString) throws Exception {
+		JSONParser jp = new JSONParser();
+		return (JSONArray) jp.parse(parsingString);
+	}
+	
 	/* 
 	 * 
 	 * 
@@ -105,10 +111,10 @@ public class HttpClientUtil {
 	 * 
 	 * 
 	 * */
-	public JSONArray sendUpbitGet() throws ParseException {
+	public JSONArray sendUpbitGet() throws Exception {
 		String result = "";
 		jwtToken = getJwtToken();
-        JSONArray jsonarray = null;
+        JSONArray jsonarray = new JSONArray();
         
 		try {
 			String authenticationToken = "Bearer " + jwtToken;
@@ -126,12 +132,14 @@ public class HttpClientUtil {
             HttpEntity entity = response.getEntity();
 
             result = EntityUtils.toString(entity, "UTF-8");
-           
+            
 			/* Object objtemp = null; */
-			JSONParser jsonParser = new JSONParser();
+			//JSONParser jsonParser = new JSONParser();
 			// objtemp = jsonParser.parse(response.body());
-			jsonarray = (JSONArray) jsonParser.parse(result);
-
+			//jsonarray = (JSONArray) jsonParser.parse(result);
+        	//System.out.println();.out.println();
+            //System.out.println(result);
+            jsonarray = JP(result);
 
         } catch (IOException e) {
 
@@ -149,7 +157,7 @@ public class HttpClientUtil {
 	 * 주문하기 
 	 * 
 	 * */
-	public JSONArray sendUpbitPost() throws ParseException {
+	public JSONArray sendUpbitPost() throws Exception {
 		String result = "";
 		jwtToken = getJwtToken();
         JSONArray jsonarray = new JSONArray();
@@ -172,13 +180,7 @@ public class HttpClientUtil {
             HttpEntity entity = response.getEntity();
 
             result = EntityUtils.toString(entity, "UTF-8");
-            
-            
- 			/* Object objtemp = null; */
- 			JSONParser jsonParser = new JSONParser();
- 			// objtemp = jsonParser.parse(response.body());
- 			jsonarray = (JSONArray) jsonParser.parse(result);
-
+            jsonarray = JP(result);
 
          } catch (IOException e) {
 
@@ -197,24 +199,24 @@ public class HttpClientUtil {
 	public String sendUpbitDelete() {
 		String result = "";
 		jwtToken = getJwtToken();
+
 		try {
 			String authenticationToken = "Bearer " + jwtToken;
 
             HttpClient client = HttpClientBuilder.create().build();
 
-            HttpDelete request = new HttpDelete(serverUrl + reqMsg);
+            HttpDelete request = new HttpDelete(serverUrl + reqMsg + queryString);
 
             request.setHeader("Content-Type", "application/json");
 
             request.addHeader("Authorization", authenticationToken);
-
-
+            
             HttpResponse response = client.execute(request);
 
             HttpEntity entity = response.getEntity();
             
-            System.out.println("sendUpbit result: "+result);
-
+            result = EntityUtils.toString(entity, "UTF-8");
+            
         } catch (IOException e) {
 
             e.printStackTrace();
