@@ -74,6 +74,7 @@ public class InquireService {
 		}
 	}
 	
+	
 	public static BigDecimal RoundingMoneyBuyAmount(BigDecimal reMoney) {
 		if (reMoney.compareTo(new BigDecimal(2000000)) != -1)
 			reMoney = reMoney.divide(new BigDecimal(1000)).multiply(new BigDecimal(1000));
@@ -111,6 +112,19 @@ public class InquireService {
 			}
 		}
 		return volume;
+	}
+	
+	public double getTotalCoinNumber() throws Exception{
+		JSONArray jsonarray = es.getAccounts(null);
+		double cnt = 0;
+		for (int i= 0 ; i < jsonarray.size(); i++) {
+			JSONObject jsonobj = (JSONObject) jsonarray.get(i);
+			double temp = Double.parseDouble(jsonobj.get("avg_buy_price").toString());
+			if (temp > 0) {
+				cnt++;
+			}
+		}
+		return cnt;
 	}
 
 	/**
@@ -162,7 +176,7 @@ public class InquireService {
 		BigDecimal testVal = new BigDecimal(getKRW());
 		double a = reall.doubleValue();
 		double b = testVal.doubleValue();
-		b = b/20;
+		b = b / (7 - getTotalCoinNumber());
 		HashMap<String, String> params = new HashMap<>();
 		params.put("market", CoinNM);
 		params.put("side", "bid");
