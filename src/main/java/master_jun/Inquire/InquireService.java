@@ -166,7 +166,7 @@ public class InquireService {
 		HashMap<String, String> params = new HashMap<>();
 		params.put("market", CoinNM);
 		params.put("side", "bid");
-		params.put("volume", String.valueOf(Math.round(b/a)));
+		params.put("volume", String.valueOf((b/a)));
 		params.put("price", volume);
 		params.put("ord_type", "limit");
 		System.out.println(es.goOrder(params));
