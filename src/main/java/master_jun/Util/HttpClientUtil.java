@@ -34,8 +34,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class HttpClientUtil {
-	private final String accessKey = "6bVK61mvTTfi2NuEUC1Jo3UQl4MGBoAtMNUxHIVn";
-	private final String secretKey = "eGUXh4mGh2xH5GRbJ2mQK1d97QisJ0wxD1Aenx0B";
+	private final String accessKey = "";
+	private final String secretKey = "";
 	private final String serverUrl = "https://api.upbit.com";
     private String jwtToken = "";
     private String reqMsg = "";
