@@ -24,7 +24,7 @@ public class ExchangeService {
 	
 	
 	/* 총자산 조회 */
-	public JSONArray getAccounts(HashMap<String, String> params) throws ParseException {
+	public JSONArray getAccounts()  {
 		
 		httpClientUtil = new HttpClientUtil("/v1/accounts");
 		
@@ -32,7 +32,7 @@ public class ExchangeService {
 	}
 
 	/* 주문 가능 조회 */
-	public JSONArray getChance(HashMap<String, String> params) throws ParseException {
+	public JSONArray getChance(HashMap<String, String> params) {
 	
 		try {
 			httpClientUtil = new HttpClientUtil("/v1/orders/chance?", params);
@@ -45,7 +45,7 @@ public class ExchangeService {
 	}
 
 	/* 개별 주문 조회 */
-	public JSONArray getOrderChk(HashMap<String, String> params) throws ParseException {
+	public JSONArray getOrderChk(HashMap<String, String> params) {
 		
 		try {
 			httpClientUtil = new HttpClientUtil("/v1/order?", params);
@@ -58,7 +58,7 @@ public class ExchangeService {
 	}
 
 	/* 주문 리스트 조회 */
-	public JSONArray getOrderlist(HashMap<String, String> params) throws ParseException {
+	public JSONArray getOrderlist(HashMap<String, String> params) {
 			
 			try {
 				httpClientUtil = new HttpClientUtil("/v1/orders?", params);
@@ -84,7 +84,7 @@ public class ExchangeService {
 	}
 
 	/* 주문하기 */
-	public JSONArray goOrder(HashMap<String, String> params) throws ParseException {
+	public JSONArray goOrder(HashMap<String, String> params) {
 		
 		try {
 			httpClientUtil = new HttpClientUtil("/v1/orders", params);

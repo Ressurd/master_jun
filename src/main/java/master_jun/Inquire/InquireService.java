@@ -5,8 +5,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.security.MessageDigest;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,7 +36,6 @@ import com.google.gson.Gson;
 
 import master_jun.Service.ChartService;
 import master_jun.Service.ExchangeService;
-import master_jun.Util.HttpClientUtil;
 import master_jun.Util.OkHttpClientUtil;
 
 /**
@@ -46,66 +48,10 @@ import master_jun.Util.OkHttpClientUtil;
 @Service
 public class InquireService {
 
-	@Autowired
-	public OkHttpClientUtil ohcu;
-
-	@Autowired
-	public ChartService cs;
 
 	@Autowired
 	public ExchangeService es;
-
-	public String getAccessKey() {
-		return "";
-	}
-
-	public String getSecretKey() {
-		return "";
-	}
-
-	static List<Map<String, Object>> myMarketCoin = new ArrayList<Map<String, Object>>();
-
-	public Map<String, Object> setValue(String CoinName, String uuid, int cnt) throws Exception {
-		Map<String, Object> marketCoinValidation = new HashMap<>();
-		marketCoinValidation.put("coin", CoinName);
-		marketCoinValidation.put("uuid", uuid);
-		marketCoinValidation.put("cnt", cnt);
-		return marketCoinValidation;
-	}
-
-	@SuppressWarnings("unchecked")
-	//@Scheduled(fixedDelay = 5500)
-	public void GETCOIN() throws Exception {
-		myMarketCoin.add(setValue("BTC", "etest", 300));
-	}
-
-	/**
-	 * 나도 스케쥴 한번만..
-	 * 
-	 * @date 2022. 7. 5.
-	 * @author 레서드
-	 * @throws Exception
-	 */
-	@Scheduled(fixedDelay = 1000)
-	public void ScheduleTest() throws Exception {
-		// System.out.println("내가가진 BTC 갯수는? : " + getBalanceCoin("KRW-BTC"));
-		// System.out.println(getOrderList("KRW-BTC"));
-		//getOrderList("KRW-BTC");
-		if(myMarketCoin.size() != 0) {
-			for(int i = 0 ; i < myMarketCoin.size(); i++) { 
-				int cnt = (int)myMarketCoin.get(i).get("cnt")-1; 
-				myMarketCoin.get(i).put("cnt", cnt);
-				if(cnt < 0) { 
-					System.out.println("작아졌어!"); 
-					cancelCoin(myMarketCoin.get(i).get("coin").toString(), myMarketCoin.get(i).get("uuid").toString());
-					myMarketCoin.remove(i); 
-				}
-			}
-		}
-
-		System.out.println(myMarketCoin.toString());
-	}
-
+	
 	public static BigDecimal RoundingMoneyBuyAmount(BigDecimal reMoney) {
 		if (reMoney.compareTo(new BigDecimal(2000000)) != -1)
 			reMoney = reMoney.divide(new BigDecimal(1000)).multiply(new BigDecimal(1000));
@@ -131,104 +77,145 @@ public class InquireService {
 			reMoney = reMoney.setScale(4, RoundingMode.DOWN);
 		return reMoney;
 	}
-
-
-	/**
-	 * 유용할지 모르겠는데 JSONArray 파서임 ㅎㅎ;; ㅈㅅ.. ㅋㅋ!! 나편할려고 만듬
-	 * 
-	 * @date 2022. 7. 5.
-	 * @author 레서드
-	 * @param parsingString
-	 * @return JSONArray
-	 * @throws Exception
-	 */
-	public JSONArray JP(String parsingString) throws Exception {
-		JSONParser jp = new JSONParser();
-		return (JSONArray) jp.parse(parsingString);
+	
+	public String getKRW() throws Exception{
+		JSONArray jsonarray = es.getAccounts();
+		String tempCoinNM = "KRW";
+		String volume = "";
+		for (int i= 0 ; i < jsonarray.size(); i++) {
+			JSONObject jsonobj = (JSONObject) jsonarray.get(i);
+			if (jsonobj.get("currency").equals(tempCoinNM)) {
+				volume = jsonobj.get("balance").toString();
+			}
+		}
+		return volume;
 	}
 
 	/**
-	 * 지갑 반환
-	 * 
-	 * @date 2022. 7. 5.
+	 * 총 자산 조회
+	 * @date 2022. 7. 14.
 	 * @author 레서드
-	 * @param CoinNM 코인명
-	 * @return
 	 * @throws Exception
 	 */
-	public void getBalanceCoin() throws Exception {
-		HttpClientUtil hcu = new HttpClientUtil();
-		hcu.sendUpbitGetBalanceCoin();
+	public List<Map<String, String>> getBalanceCoin(List<Map<String, String>> buyList) throws Exception {
+		BigDecimal calc = null;
+		String coinNm = "";
+		boolean chk = true;
+		Map<String, String> tempMap = null;
+		JSONArray exjArray = es.getAccounts();
+		for( int i =0;  i<exjArray.size(); i++) {
+			JSONObject temp = (JSONObject) exjArray.get(i);
+			calc = BigDecimal.valueOf(Double.parseDouble(temp.get("balance").toString()));
+			calc = calc.multiply(BigDecimal.valueOf(Double.parseDouble(temp.get("avg_buy_price").toString())));
+			
+			if(calc.compareTo(BigDecimal.valueOf(5000)) != -1 && !temp.get("currency").equals("KRW") && !temp.get("currency").equals("KMD")) {
+				coinNm = temp.get("unit_currency") + "-" + temp.get("currency");
+				tempMap = new HashMap<String, String>();
+				System.out.println(coinNm + "   " + calc);
+				tempMap.put("market", coinNm);
+				for(int j = 0; j<buyList.size(); j++) {
+					Map<String, String> buyMap = buyList.get(j);
+					if(buyMap.get("market").equals(tempMap.get("market"))) {
+						chk=false;
+					}
+				}
+				if(chk) {
+					buyList.add(tempMap);
+				}else {
+					chk=true;
+				}
+			}
+		}
+		
+		return buyList;
 	}
 
 	/**
-	 * 주문한거 리스트 뽑는건데 지금은 uuid만 쓸꺼임 + cnt까지
-	 * 
-	 * @date 2022. 7. 5.
+	 * 주문 리스트 조회
+	 * @date 2022. 7. 14.
 	 * @author 레서드
-	 * @param CoinNM "KRW-BTC" ...
-	 * @return
 	 * @throws Exception
 	 */
-	public void getOrderList(String CoinNM) throws Exception {
+	public void getOrderList() throws Exception {
 		HashMap<String, String> params = new HashMap<>();
 		params.put("state", "wait");
-		HttpClientUtil hcu = new HttpClientUtil(CoinNM, params);
-		hcu.sendUpbitGetOrderList();
+		System.out.println(es.getOrderlist(params));
 	}
 
 	/**
-	 * 코인 캔슬하기
-	 * 
-	 * @date 2022. 7. 5.
+	 * 주문 취소 접수
+	 * @date 2022. 7. 14.
 	 * @author 레서드
-	 * @param CoinNM    취소할 코인명명
-	 * @param uuidValue 반드시 getOrderList 를 거쳐서 list에서 값뽑아서 uuid값 사용하자
+	 * @param uuidValue - uuid값 필요
 	 * @throws Exception
 	 */
-	public void cancelCoin(String CoinNM, String uuidValue) throws Exception {
+	public void cancelCoin(String uuidValue) throws Exception {
 		HashMap<String, String> params = new HashMap<>();
 		params.put("uuid", uuidValue);
-		HttpClientUtil hcu = new HttpClientUtil(CoinNM, params);
-		hcu.sendUpbitDelete();
+		System.out.println(es.getOrderDel(params));
 	}
 
 	/**
 	 * 지정가 매수
-	 * 
-	 * @date 2022. 7. 5.
+	 * @date 2022. 7. 14.
 	 * @author 레서드
-	 * @param CoinNM 코인명
-	 * @param volume 매수 지정가
+	 * @param CoinNM - 코인명
+	 * @param volume - 지정가격
+	 * @param price - 매수할금액
 	 * @throws Exception
 	 */
 	public void buyCoin(String CoinNM, String volume) throws Exception {
-		BigDecimal reall = RoundingMoneyBuyAmount(new BigDecimal(volume));
-		String newVolume = reall.toPlainString();
-		HashMap<String, String> params = new HashMap<>();
-		params.put("market", CoinNM);
-		params.put("side", "bid");
-		params.put("volume", newVolume);
-		params.put("price", "5000");
-		params.put("ord_type", "limit");
-		HttpClientUtil hcu = new HttpClientUtil(CoinNM, params);
-		hcu.sendUpbitPostBuyCoin();
+        BigDecimal reall = RoundingMoneyBuyAmount(new BigDecimal(volume));
+        BigDecimal testVal = new BigDecimal(getKRW());
+        double a = reall.doubleValue();
+        double b = testVal.doubleValue();
+        b = b / (7 - getTotalCoinNumber());
+        HashMap<String, String> params = new HashMap<>();
+        params.put("market", CoinNM);
+        params.put("side", "bid");
+        params.put("volume", String.valueOf((b/a)));
+        params.put("price", String.valueOf(reall));
+        params.put("ord_type", "limit");
+        System.out.println(es.goOrder(params));
 	}
 
 	/**
-	 * 시장가 매도
-	 * 
-	 * @date 2022. 7. 5.
+	 * 지정가 매도
+	 * @date 2022. 7. 14.
 	 * @author 레서드
-	 * @param CoinNM 코인명
+	 * @param CoinNM - 코인명
 	 * @throws Exception
 	 */
 	public void sellCoin(String CoinNM) throws Exception {
+		JSONArray jsonarray = es.getAccounts();
+		String tempCoinNM = CoinNM.replace("KRW-", "");
+		String volume = "";
+		for (int i= 0 ; i < jsonarray.size(); i++) {
+			JSONObject jsonobj = (JSONObject) jsonarray.get(i);
+			if (jsonobj.get("currency").equals(tempCoinNM)) {
+				volume = jsonobj.get("balance").toString();
+			}
+		}
+		
 		HashMap<String, String> params = new HashMap<>();
 		params.put("market", CoinNM);
 		params.put("side", "ask");
+		params.put("volume", volume);
 		params.put("ord_type", "market");
-		HttpClientUtil hcu = new HttpClientUtil(CoinNM, params);
-		hcu.sendUpbitSellCoin();
+		System.out.println(es.goOrder(params));
+
 	}
+	
+	public double getTotalCoinNumber() throws Exception{
+        JSONArray jsonarray = es.getAccounts();
+        double cnt = 0;
+        for (int i= 0 ; i < jsonarray.size(); i++) {
+            JSONObject jsonobj = (JSONObject) jsonarray.get(i);
+            double temp = Double.parseDouble(jsonobj.get("avg_buy_price").toString());
+            if (temp > 0) {
+                cnt++;
+            }
+        }
+        return cnt;
+    }
 }

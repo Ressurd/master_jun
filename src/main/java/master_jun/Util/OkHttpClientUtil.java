@@ -100,6 +100,7 @@ public class OkHttpClientUtil {
 				/* Object objtemp = null; */
 				JSONParser jsonParser=new JSONParser();
 				//objtemp = jsonParser.parse(response.body());
+				//System.out.println(response.body());
 				jsonarray = (JSONArray) jsonParser.parse(response.body());
 			} catch (IOException | InterruptedException | ParseException e) {
 				// TODO Auto-generated catch block

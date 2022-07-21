@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.http.HttpClient;
 import java.security.MessageDigest;
+import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Component;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 
+import master_jun.Inquire.InquireService;
 import master_jun.Service.ChartService;
 import master_jun.Service.ExchangeService;
 import master_jun.Util.OkHttpClientUtil;
@@ -39,7 +42,8 @@ public class BuySchedule {
 
 	@Autowired
 	public ExchangeService exchangeService;
-
+	@Autowired
+	public InquireService inquireService;
 	@Autowired
 	public ChartService chartServiceS;
 
@@ -58,45 +62,32 @@ public class BuySchedule {
 	@Scheduled(cron = "0 0/10 * * * *")
 	public void CoinListSearch() throws Exception {
 		coinList = chartService.getCoinList("KRW");
+
 	}
 
 	@Scheduled(fixedDelay = 1000)
-	public void OrderList() throws Exception {
-		HashMap<String, String> params = new HashMap<String, String>();
-		JSONObject jObject = new JSONObject();
-		Boolean chk = true;
+	public void getcoin() throws Exception {
+		
+		HashMap<String, String> params = new HashMap<>();
 		params.put("state", "wait");
-		JSONArray exjArray = exchangeService.getOrderlist(params);
-
-		if (myMarketCoin.size() == 0) {
-			Map<String, Object> myMarketCoinMap = new HashMap<String, Object>();
-			myMarketCoinMap.put("market", jObject.get("market"));
-			myMarketCoinMap.put("uuid", jObject.get("uuid"));
-			myMarketCoinMap.put("cnt", "180");
-			myMarketCoin.add(myMarketCoinMap);
-		} else {
-			for (int i = 0; i < exjArray.size(); i++) {
-				chk = true;
-				jObject = (JSONObject) exjArray.get(i);
-				for (int mNum = 0; mNum < myMarketCoin.size(); mNum++) {
-					if (jObject.get("market").equals(myMarketCoin.get(i).get("market"))) {
-						chk = false;
-						break;
-					}
-				}
-				if (chk) {
-					Map<String, Object> myMarketCoinMap = new HashMap<String, Object>();
-					myMarketCoinMap.put("market", jObject.get("market"));
-					myMarketCoinMap.put("uuid", jObject.get("uuid"));
-					myMarketCoinMap.put("cnt", "180");
-				}
+		JSONArray jsonarray = exchangeService.getOrderlist(params);
+		for (int i = 0; i < jsonarray.size(); i++) {
+			JSONObject jsonobj = (JSONObject) jsonarray.get(i);
+			String tempTime = jsonobj.get("created_at").toString();
+			SimpleDateFormat input = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+			Date coinTime = input.parse(tempTime);
+			Date nowTime = new Date();
+			if (((nowTime.getTime() - coinTime.getTime()) / 1000) > 600) {
+				inquireService.cancelCoin(jsonobj.get("uuid").toString());
 			}
 		}
-
 	}
 
-	@Scheduled(cron = "0 0/3 * * * *")
+	@Scheduled(fixedDelay = 300000)
 	public void BuyListView() throws Exception {
+
+		buyList = inquireService.getBalanceCoin(buyList);
+		
 		Map<String, String> buyMap = new HashMap<String, String>();
 		if (buyList.size() > 0) {
 			System.out.println("----보유 목록------");
@@ -108,7 +99,6 @@ public class BuySchedule {
 		}
 		System.out.println("----현재 보유 코인 수 : " + buyList.size() + " 개----");
 		System.out.println("----현재 총 매도했던 코인 수 : " + sellCoinCnt + " 개----");
-		System.out.println("----현재 총 수익 : " + last.toPlainString() + " ----");
 
 		/* 벤리스트 초기화 */
 		if (banList.size() > 0) {
@@ -121,13 +111,14 @@ public class BuySchedule {
 	 */
 	@Scheduled(fixedDelay = 100)
 	public void BuySearch() throws Exception {
+
 		// System.out.println(CycCnt+"번 싸이클 시작 : " + LocalTime.now());
 		// System.out.println("-------------------------------------");
 		if (coinList == null) {
 			coinList = chartService.getCoinList("KRW");
 		}
 
-		for (int i = 0; i < 50; i++) {
+		for (int i = 0; i < 70; i++) {
 			BigDecimal temp_low = null;
 			BigDecimal temp_high = null;
 			BigDecimal stanHigh = null;// 고가
@@ -192,80 +183,64 @@ public class BuySchedule {
 					BigDecimal bb120h = (BigDecimal) chartService.getBBMin(coinNmB, 5, 120, 2).get("highbb");
 
 					stanNow = BigDecimal.valueOf(
-							Double.parseDouble(chartService.getPrice(coinNmB, 3).get("trade_price").toString()));
+							Double.parseDouble(chartService.getPrice(coinNmB, 5).get("high_price").toString()));
 					temp_high = BigDecimal
 							.valueOf(Double.parseDouble(tenIchimokuMap.get("high_prereqSpan").toString()));
 
-					if (type.equals("10")) {
-						/* 손절 */
-						if (stanNow.compareTo((BigDecimal) tenIchimokuMap.get("high_prereqSpan")) == -1
-								&& stanNow.compareTo((BigDecimal) twentyichimokuMap.get("low_prereqSpan")) == -1) {
-							sellCoin = true;
-							cause = "손절";
-						}
-
-						if (stanNow.compareTo((BigDecimal) tenIchimokuMap.get("high_prereqSpan")) == 1
-								&& stanNow.compareTo((BigDecimal) fiveIchimokuMap.get("high_prereqSpan")) == -1) {
-							sellCoin = true;
-							cause = "10구름대 위 5구름대 아래";
-						}
-
-					} else if (type.equals("60l")) {
-						/* 손절부터 확인 */
-						/*
-						 * if (stanNow.compareTo((BigDecimal) fiveIchimokuMap.get("low_prereqSpan")) ==
-						 * -1) { sellCoin = true; cause="손절"; }
-						 */
-						if (temp_high.compareTo((BigDecimal) bb120l) == -1) {
-							sellCoin = true;
-							cause = "손절";
-						}
-
-						if (temp_high.compareTo((BigDecimal) tenIchimokuMap.get("high_prereqSpan")) != -1
-								&& stanNow.compareTo(ma120) == 1) {
-							sellCoin = true;
-							cause = "120일선";
-						}
-
-						if (temp_high.compareTo((BigDecimal) tenIchimokuMap.get("high_prereqSpan")) == -1
-								&& stanNow.compareTo((BigDecimal) twentyichimokuMap.get("low_prereqSpan")) == 1) {
-							sellCoin = true;
-							cause = "20구름대 아래";
-						}
-					} else if (type.equals("20")) {
-						/* 손절부터 확인 */
-						if (stanNow.compareTo((BigDecimal) twentyichimokuMap.get("high_prereqSpan")) == -1
-								&& stanNow.compareTo((BigDecimal) tenIchimokuMap.get("low_prereqSpan")) == -1) {
-							sellCoin = true;
-							cause = "손절";
-						}
-
-						if (stanNow.compareTo((BigDecimal) twentyichimokuMap.get("high_prereqSpan")) == 1
-								&& stanNow.compareTo((BigDecimal) tenIchimokuMap_s.get("high_prereqSpan")) == -1) {
-							sellCoin = true;
-							cause = "20구름대 위 10구름대 아래";
-						}
-
+					/*
+					 * if (type.equals("10")) { 손절 if (stanNow.compareTo((BigDecimal)
+					 * tenIchimokuMap.get("high_prereqSpan")) == -1 &&
+					 * stanNow.compareTo((BigDecimal) twentyichimokuMap.get("low_prereqSpan")) ==
+					 * -1) { sellCoin = true; cause = "손절"; }
+					 * 
+					 * if (stanNow.compareTo((BigDecimal) tenIchimokuMap.get("high_prereqSpan")) ==
+					 * 1 && stanNow.compareTo((BigDecimal) fiveIchimokuMap.get("high_prereqSpan"))
+					 * == -1) { sellCoin = true; cause = "10구름대 위 5구름대 아래"; }
+					 * 
+					 * } else if (type.equals("60l")) {
+					 */
+					/* 손절부터 확인 */
+					/*
+					 * if (stanNow.compareTo((BigDecimal) fiveIchimokuMap.get("low_prereqSpan")) ==
+					 * -1) { sellCoin = true; cause="손절"; }
+					 */
+					if (temp_high.compareTo((BigDecimal) bb120l) == -1) {
+						sellCoin = true;
+						cause = "손절";
 					}
+
+					if (temp_high.compareTo((BigDecimal) tenIchimokuMap.get("high_prereqSpan")) != -1
+							&& stanNow.compareTo(ma120) == 1) {
+						sellCoin = true;
+						cause = "120일선";
+					}
+
+					if (temp_high.compareTo((BigDecimal) tenIchimokuMap.get("high_prereqSpan")) == -1
+							&& stanNow.compareTo((BigDecimal) twentyichimokuMap.get("low_prereqSpan")) == 1) {
+						sellCoin = true;
+						cause = "20구름대 아래";
+					}
+					/*
+					 * } else if (type.equals("20")) { 손절부터 확인 if (stanNow.compareTo((BigDecimal)
+					 * twentyichimokuMap.get("high_prereqSpan")) == -1 &&
+					 * stanNow.compareTo((BigDecimal) tenIchimokuMap.get("low_prereqSpan")) == -1) {
+					 * sellCoin = true; cause = "손절"; }
+					 * 
+					 * if (stanNow.compareTo((BigDecimal) twentyichimokuMap.get("high_prereqSpan"))
+					 * == 1 && stanNow.compareTo((BigDecimal)
+					 * tenIchimokuMap_s.get("high_prereqSpan")) == -1) { sellCoin = true; cause =
+					 * "20구름대 위 10구름대 아래"; }
+					 * 
+					 * }
+					 */
 
 					/* 매도타점확인 */
 					if (sellCoin) {
-						System.out.println("-------매도타점 발생 알림-------");
-						System.out.println(coinNmB + " " + type);
-						System.out.println("매수가 : " + buyTmpMap.get("buyValue"));
-						System.out.println("매도가 : " + stanNow.toPlainString());
-						System.out.println("cause : " + cause);
-						Double dtmp = Double.parseDouble(
-								stanNow.divide(BigDecimal.valueOf(Double.parseDouble(buyTmpMap.get("buyValue"))), 6,
-										BigDecimal.ROUND_DOWN).toPlainString());
-						System.out.println("손익 : " + dtmp);
-						last = BigDecimal.valueOf(dtmp).subtract(BigDecimal.valueOf(1))
-								.multiply((BigDecimal.valueOf(0.2))).add(last).setScale(6, RoundingMode.DOWN);
 
-						System.out.println("총 손익 : " + last);
+						inquireService.sellCoin(coinNmB);
 						banList.add(buyTmpMap);
 						buyList.remove(bCnt);
-						System.out.println("-------매도타점 발생 끝-------");
+						System.out.println("-------매도타점 발생 끝-------" + cause);
 						sellCoin = false;
 						sellCoinCnt++;
 					}
@@ -375,17 +350,12 @@ public class BuySchedule {
 							&& temp_high.compareTo(ma60) != -1) {
 						if (temp_high.compareTo(ma120) != 1) {
 							if (stanHigh.compareTo(temp_high) == 1 && stanNow.compareTo(temp_high) == -1) {
-								System.out.println("-------매수타점 발생 알림-------");
-								System.out.println(coinNm + " 60l");
-								System.out.println("매수가 : " + stanNow.toPlainString());
-								System.out.println("stanHigh : " + stanHigh.toPlainString());
-								System.out.println("일목HIGH : "
-										+ ((BigDecimal) twentyichimokuMap.get("high_prereqSpan")).toPlainString());
 								Map<String, String> buyMap = new HashMap<String, String>();
 								buyMap.put("market", coinNm);
 								buyMap.put("buyValue", stanNow.toPlainString());
-								buyMap.put("type", "60l");
+								/* buyMap.put("type", "60l"); */
 								buyList.add(buyMap);
+								inquireService.buyCoin(coinNm, temp_high.toPlainString());
 								System.out.println("-------매수타점 발생 끝-------");
 								cnt++;
 								continue;
@@ -398,7 +368,11 @@ public class BuySchedule {
 				throw e;
 			}
 			chartService.free();
-			Thread.sleep(60);
+			if (bSize > 0)
+				Thread.sleep(66);
+			else
+				Thread.sleep(101);
+			
 		}
 
 		// System.out.println("총매수 타점 : " + cnt);
